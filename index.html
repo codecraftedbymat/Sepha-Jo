@@ -6,13 +6,13 @@
 
   <!-- SEO -->
   <title>Sepha-Jo by Lotte — Schoonheidspecialiste</title>
-  <meta name="description" content="Sepha-Jo by Lotte — Uw schoonheidspecialiste voor gelaatsverzorgingen, dermaplanning, microneedling, kruidenpeeling, pedicure aan huis, lashlift, brows en epilatie." />
-  <meta name="keywords" content="schoonheidspecialiste, gelaatsverzorging, dermaplanning, microneedling, kruidenpeeling, pedicure, lashlift, brows, epilatie" />
+  <meta name="description" content="Sepha-Jo by Lotte — Uw schoonheidspecialiste voor gelaatsverzorgingen, dermaplanning, microneedling, kruidenpeeling, pedicure aan huis, lashlift, brows en epilatie. Maak online uw afspraak." />
+  <meta name="keywords" content="schoonheidspecialiste, gelaatsverzorging, dermaplanning, microneedling, kruidenpeeling, pedicure, lashlift, brows, epilatie, afspraak maken" />
   <meta name="author" content="Sepha-Jo by Lotte" />
 
   <!-- Open Graph -->
   <meta property="og:title" content="Sepha-Jo by Lotte — Schoonheidspecialiste" />
-  <meta property="og:description" content="Professionele schoonheidsbehandelingen door Lotte. Gelaatsverzorgingen, dermaplanning, microneedling en meer." />
+  <meta property="og:description" content="Professionele schoonheidsbehandelingen door Lotte. Gelaatsverzorgingen, dermaplanning, microneedling en meer. Boek online." />
   <meta property="og:type" content="website" />
   <meta property="og:image" content="logo01.jpeg" />
 
@@ -31,7 +31,22 @@
     "@type": "BeautySalon",
     "name": "Sepha-Jo by Lotte",
     "telephone": "+32477596769",
-    "description": "Schoonheidspecialiste — Gelaatsverzorgingen, Dermaplanning, Microneedling, Kruidenpeeling, Pedicure aan huis, Lashlift, Brows, Epilatie"
+    "description": "Schoonheidspecialiste — Gelaatsverzorgingen, Dermaplanning, Microneedling, Kruidenpeeling, Pedicure aan huis, Lashlift, Brows, Epilatie",
+    "potentialAction": {
+      "@type": "ReserveAction",
+      "target": {
+        "@type": "EntryPoint",
+        "urlTemplate": "https://VOTRE-DOMAINE.up.railway.app",
+        "actionPlatform": [
+          "http://schema.org/DesktopWebPlatform",
+          "http://schema.org/MobileWebPlatform"
+        ]
+      },
+      "result": {
+        "@type": "Reservation",
+        "name": "Afspraak bij Sepha-Jo by Lotte"
+      }
+    }
   }
   </script>
 </head>
@@ -46,6 +61,7 @@
       <ul class="navbar__links" id="navLinks">
         <li><a href="#diensten" class="navbar__link">Behandelingen</a></li>
         <li><a href="#contact" class="navbar__link">Contact</a></li>
+        <li><a href="https://VOTRE-DOMAINE.up.railway.app" class="navbar__link navbar__link--book">Afspraak maken</a></li>
       </ul>
       <button class="navbar__hamburger" id="hamburger" aria-label="Menu openen" aria-expanded="false">
         <span></span>
@@ -71,6 +87,10 @@
       <a href="#diensten" class="hero__cta" id="hero-cta">
         Ontdek de behandelingen
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </a>
+      <a href="https://VOTRE-DOMAINE.up.railway.app" class="hero__cta hero__cta--book" id="hero-cta-book">
+        Direct online reserveren
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
       </a>
     </div>
     <div class="hero__scroll-indicator">
@@ -185,8 +205,27 @@
               <br />
               <p class="service-card__text">*Sessie Oorkaarsen €10</p>
           </article>
-          <button id="" class="btn btn-primary btn-lg">Prédire les clusters</button>
 
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RESERVERING ===== -->
+  <section class="booking-band" id="reserveren">
+    <div class="container">
+      <div class="booking-band__inner reveal">
+        <div class="booking-band__text">
+          <p class="booking-band__label">Online agenda</p>
+          <h2 class="booking-band__title">Maak zelf uw afspraak</h2>
+          <p class="booking-band__desc">
+            Kies uw behandeling, bekijk de vrije momenten en boek in enkele klikken.
+            U ontvangt meteen een bevestiging per e-mail.
+          </p>
+        </div>
+        <a href="https://VOTRE-DOMAINE.up.railway.app" class="booking-band__cta" id="booking-cta">
+          Afspraak maken
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
       </div>
     </div>
   </section>
@@ -228,6 +267,16 @@
               <span class="contact__detail-label">WhatsApp</span>
               <span class="contact__detail-value">
                 <a href="https://wa.me/32477596769" target="_blank" rel="noopener noreferrer">Stuur een bericht</a>
+              </span>
+            </div>
+          </div>
+
+          <div class="contact__detail" id="contact-online">
+            <div class="contact__detail-icon">🗓️</div>
+            <div class="contact__detail-content">
+              <span class="contact__detail-label">Online reserveren</span>
+              <span class="contact__detail-value">
+                <a href="https://VOTRE-DOMAINE.up.railway.app">Bekijk de vrije momenten</a>
               </span>
             </div>
           </div>
