@@ -5,17 +5,30 @@
 
 FROM php:8.2-apache
 
-# unzip et libzip : nécessaires à Composer pour décompresser les paquets.
+# Marqueur de version : le modifier invalide le cache Docker et force la
+# reconstruction complète des couches suivantes. Utile quand une couche
+# mise en cache contient une configuration devenue incorrecte.
+ENV BUILD_REV=3
+
+# --- Dépendances ------------------------------------------------------
+# unzip et libzip sont nécessaires à Composer pour décompresser les paquets.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends unzip libzip-dev \
     && docker-php-ext-install pdo pdo_mysql zip \
-    && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
+
+# --- Modules Apache ---------------------------------------------------
+# L'image php:8.2-apache est livrée avec le MPM prefork actif. On s'assure
+# qu'un seul MPM est chargé : plusieurs simultanément font échouer le
+# démarrage avec « More than one MPM loaded ».
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
+    && a2enmod mpm_prefork rewrite \
+    && apache2ctl -t -D DUMP_MODULES 2>&1 | grep -i mpm
 
 WORKDIR /var/www/html
 COPY . /var/www/html
 
-# PHPMailer, pour l'envoi SMTP des confirmations.
+# --- PHPMailer --------------------------------------------------------
 # Tolérant à l'échec : un problème d'e-mail ne doit pas bloquer le déploiement.
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 ENV COMPOSER_ALLOW_SUPERUSER=1
@@ -28,9 +41,8 @@ RUN chown -R www-data:www-data /var/www/html
 #  Démarrage
 #
 #  Le port est imposé par Railway via la variable PORT, connue seulement
-#  à l'exécution. La configuration Apache est donc écrite au démarrage,
-#  une fois la valeur réellement disponible : Apache ne substitue pas
-#  les variables d'environnement dans ses fichiers de configuration.
+#  à l'exécution : la configuration est donc écrite au lancement, Apache
+#  ne substituant pas les variables d'environnement dans ses fichiers.
 #
 #  DocumentRoot pointe sur public/ : includes/, api/ et les fichiers de
 #  configuration restent hors du dossier servi.
@@ -52,6 +64,8 @@ RUN printf '%s\n' \
     '    CustomLog /proc/self/fd/1 combined' \
     '</VirtualHost>' \
     'EOF' \
+    'echo "--- MPM charges ---"' \
+    'apache2ctl -t -D DUMP_MODULES 2>/dev/null | grep -i mpm || true' \
     'echo "Apache demarre sur le port ${PORT}"' \
     'exec apache2-foreground' \
     > /usr/local/bin/demarrer.sh \
