@@ -20,7 +20,7 @@ if ($prestationId <= 0 || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
 
 $conn = (new Database())->connect();
 
-$stmt = $conn->prepare('SELECT id, nom, duree, prix FROM prestations WHERE id = :id AND actif = 1');
+$stmt = $conn->prepare('SELECT Id, Service, Delay, Prices FROM Services WHERE Id = :id AND Active = 1');
 $stmt->execute([':id' => $prestationId]);
 $prestation = $stmt->fetch();
 
@@ -30,11 +30,11 @@ if (!$prestation) {
     exit;
 }
 
-$creneaux = creneaux_du_jour($conn, $date, (int) $prestation['duree']);
+$creneaux = creneaux_du_jour($conn, $date, (int) $prestation['Delay']);
 
 echo json_encode([
     'ok'       => true,
-    'ferme'    => jour_ferme($date),
+    'ferme'    => jour_ferme($conn, $date),
     'date'     => $date,
     'longue'   => fmt_date_longue($date),
     'creneaux' => $creneaux,

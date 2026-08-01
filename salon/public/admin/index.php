@@ -4,62 +4,62 @@ require_once __DIR__ . '/includes/layout.php';
 
 /* --- Indicateurs ------------------------------------------------------ */
 $rdvAujourdhui = $conn->query("
-    SELECT COUNT(*) FROM reservations
-    WHERE DATE(date_debut) = CURDATE() AND statut = 'confirmee'
+    SELECT COUNT(*) FROM Reservations
+    WHERE DATE(StartDate) = CURDATE() AND Status = 'confirmed'
 ")->fetchColumn();
 
 $rdvSemaine = $conn->query("
-    SELECT COUNT(*) FROM reservations
-    WHERE YEARWEEK(date_debut, 1) = YEARWEEK(CURDATE(), 1) AND statut = 'confirmee'
+    SELECT COUNT(*) FROM Reservations
+    WHERE YEARWEEK(StartDate, 1) = YEARWEEK(CURDATE(), 1) AND Status = 'confirmed'
 ")->fetchColumn();
 
 $caMois = $conn->query("
-    SELECT COALESCE(SUM(p.prix), 0)
-    FROM reservations r
-    JOIN prestations p ON p.id = r.prestation_id
-    WHERE YEAR(r.date_debut) = YEAR(CURDATE())
-      AND MONTH(r.date_debut) = MONTH(CURDATE())
-      AND r.statut = 'confirmee'
+    SELECT COALESCE(SUM(p.Prices), 0)
+    FROM Reservations r
+    JOIN Services p ON p.Id = r.ServiceId
+    WHERE YEAR(r.StartDate) = YEAR(CURDATE())
+      AND MONTH(r.StartDate) = MONTH(CURDATE())
+      AND r.Status = 'confirmed'
 ")->fetchColumn();
 
 $topPresta = $conn->query("
-    SELECT p.nom, COUNT(*) AS n
-    FROM reservations r
-    JOIN prestations p ON p.id = r.prestation_id
-    WHERE r.statut = 'confirmee'
-      AND r.date_debut >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
-    GROUP BY p.id
+    SELECT p.Service, COUNT(*) AS n
+    FROM Reservations r
+    JOIN Services p ON p.Id = r.ServiceId
+    WHERE r.Status = 'confirmed'
+      AND r.StartDate >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+    GROUP BY p.Id
     ORDER BY n DESC
     LIMIT 1
 ")->fetch();
 
 /* --- Agenda du jour --------------------------------------------------- */
 $today = $conn->query("
-    SELECT r.*, p.nom AS prestation, p.duree, p.prix
-    FROM reservations r
-    JOIN prestations p ON p.id = r.prestation_id
-    WHERE DATE(r.date_debut) = CURDATE()
-    ORDER BY r.date_debut ASC
+    SELECT r.*, p.Service AS prestation, p.Delay, p.Prices
+    FROM Reservations r
+    JOIN Services p ON p.Id = r.ServiceId
+    WHERE DATE(r.StartDate) = CURDATE()
+    ORDER BY r.StartDate ASC
 ")->fetchAll();
 
 /* --- Prochains rendez-vous ------------------------------------------- */
 $next = $conn->query("
-    SELECT r.*, p.nom AS prestation, p.duree
-    FROM reservations r
-    JOIN prestations p ON p.id = r.prestation_id
-    WHERE r.date_debut > NOW() AND r.statut = 'confirmee'
-    ORDER BY r.date_debut ASC
+    SELECT r.*, p.Service AS prestation, p.Delay
+    FROM Reservations r
+    JOIN Services p ON p.Id = r.ServiceId
+    WHERE r.StartDate > NOW() AND r.Status = 'confirmed'
+    ORDER BY r.StartDate ASC
     LIMIT 6
 ")->fetchAll();
 
 /* --- Répartition sur 7 jours (mini-graphe) ---------------------------- */
 $serie = $conn->query("
-    SELECT DATE(date_debut) AS j, COUNT(*) AS n
-    FROM reservations
-    WHERE statut = 'confirmee'
-      AND date_debut >= CURDATE()
-      AND date_debut < DATE_ADD(CURDATE(), INTERVAL 7 DAY)
-    GROUP BY DATE(date_debut)
+    SELECT DATE(StartDate) AS j, COUNT(*) AS n
+    FROM Reservations
+    WHERE Status = 'confirmed'
+      AND StartDate >= CURDATE()
+      AND StartDate < DATE_ADD(CURDATE(), INTERVAL 7 DAY)
+    GROUP BY DATE(StartDate)
 ")->fetchAll();
 
 $parJour = [];
@@ -87,7 +87,7 @@ flash();
     </article>
     <article class="kpi">
         <span class="kpi-label">Prestation phare (30 j)</span>
-        <span class="kpi-value kpi-text"><?= $topPresta ? e($topPresta['nom']) : '—' ?></span>
+        <span class="kpi-value kpi-text"><?= $topPresta ? e($topPresta['Service']) : '—' ?></span>
     </article>
 </section>
 
@@ -98,7 +98,7 @@ flash();
             <h2>Agenda du jour</h2>
             <span>
                 <a class="link" href="nouvelle-reservation.php">+ Nouveau rendez-vous</a>
-                <a class="link" href="reservations.php" style="margin-left:14px;">Tout voir</a>
+                <a class="link" href="planning.php?v=jour" style="margin-left:14px;">Voir le planning</a>
             </span>
         </div>
 
@@ -107,19 +107,19 @@ flash();
         <?php else : ?>
             <ul class="timeline">
                 <?php foreach ($today as $r) : ?>
-                    <li class="tl-item<?= $r['statut'] === 'annulee' ? ' is-cancelled' : '' ?>">
+                    <li class="tl-item<?= $r['Status'] === 'cancelled' ? ' is-cancelled' : '' ?>">
                         <span class="tl-time">
-                            <?= e(fmt_heure($r['date_debut'])) ?>
-                            <small><?= e(fmt_heure($r['date_fin'])) ?></small>
+                            <?= e(fmt_heure($r['StartDate'])) ?>
+                            <small><?= e(fmt_heure($r['EndDate'])) ?></small>
                         </span>
                         <span class="tl-body">
                             <strong><?= e($r['prestation']) ?></strong>
-                            <span class="tl-meta"><?= e($r['client_nom']) ?> · <?= e($r['client_tel']) ?></span>
+                            <span class="tl-meta"><?= e($r['ClientName']) ?> · <?= e($r['ClientTel']) ?></span>
                         </span>
-                        <span class="badge badge-<?= $r['statut'] === 'annulee' ? 'off' : 'on' ?>">
-                            <?= $r['statut'] === 'annulee' ? 'Annulée' : 'Confirmée' ?>
+                        <span class="badge badge-<?= $r['Status'] === 'cancelled' ? 'off' : 'on' ?>">
+                            <?= $r['Status'] === 'cancelled' ? 'Annulée' : 'Confirmée' ?>
                         </span>
-                        <a class="btn btn-mini" href="modifier-reservation.php?id=<?= (int) $r['id'] ?>">Modifier</a>
+                        <a class="btn btn-mini" href="modifier-reservation.php?id=<?= (int) $r['Id'] ?>">Modifier</a>
                     </li>
                 <?php endforeach; ?>
             </ul>
@@ -154,14 +154,14 @@ flash();
                 <ul class="mini-list">
                     <?php foreach ($next as $r) : ?>
                         <li>
-                            <span class="avatar"><?= e(initiales($r['client_nom'])) ?></span>
+                            <span class="avatar"><?= e(initiales($r['ClientName'])) ?></span>
                             <span class="mini-body">
-                                <strong><?= e($r['client_nom']) ?></strong>
+                                <strong><?= e($r['ClientName']) ?></strong>
                                 <span><?= e($r['prestation']) ?></span>
                             </span>
                             <span class="mini-when">
-                                <?= e(date('d/m', strtotime($r['date_debut']))) ?><br>
-                                <small><?= e(fmt_heure($r['date_debut'])) ?></small>
+                                <?= e(date('d/m', strtotime($r['StartDate']))) ?><br>
+                                <small><?= e(fmt_heure($r['StartDate'])) ?></small>
                             </span>
                         </li>
                     <?php endforeach; ?>

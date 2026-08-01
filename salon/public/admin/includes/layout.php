@@ -13,7 +13,8 @@ function admin_header(string $title, string $active = ''): void
         'reservations' => ['reservations.php', 'Réservations'],
         'nouvelle'     => ['nouvelle-reservation.php', 'Nouveau rendez-vous'],
         'prestations'  => ['prestations.php',  'Prestations'],
-        'planning'     => ['planning.php',     'Planning'],
+        'planning'     => ['planning.php?v=mois', 'Planning'],
+        'disponibilites' => ['disponibilites.php', 'Disponibilités'],
         'utilisateurs' => ['utilisateurs.php', 'Utilisateurs'],
     ];
     $user = $_SESSION['username'] ?? 'admin';

@@ -52,7 +52,7 @@ if (!preg_match('/^[0-9 +().-]{8,20}$/', $tel)) {
 
 $conn = (new Database())->connect();
 
-$stmt = $conn->prepare('SELECT id, nom, duree, prix FROM prestations WHERE id = :id AND actif = 1');
+$stmt = $conn->prepare('SELECT Id, Service, Delay, Prices FROM Services WHERE Id = :id AND Active = 1');
 $stmt->execute([':id' => $prestationId]);
 $prestation = $stmt->fetch();
 
@@ -60,7 +60,7 @@ if (!$prestation) {
     repondre(404, ['ok' => false, 'message' => 'Prestation indisponible.']);
 }
 
-$duree     = (int) $prestation['duree'];
+$duree     = (int) $prestation['Delay'];
 $dateDebut = $date . ' ' . $heure . ':00';
 $dateFin   = date('Y-m-d H:i:s', strtotime($dateDebut) + $duree * 60);
 
@@ -82,11 +82,11 @@ try {
     // Verrouille les lignes du jour : un second client en attente ne pourra
     // lire qu'après validation de la présente transaction.
     $lock = $conn->prepare("
-        SELECT id FROM reservations
-        WHERE statut = 'confirmee'
-          AND DATE(date_debut) = :d
-          AND date_debut < :fin
-          AND date_fin   > :debut
+        SELECT Id FROM Reservations
+        WHERE Status = 'confirmed'
+          AND DATE(StartDate) = :d
+          AND StartDate < :fin
+          AND EndDate   > :debut
         FOR UPDATE
     ");
     $lock->execute([':d' => $date, ':debut' => $dateDebut, ':fin' => $dateFin]);
@@ -97,8 +97,8 @@ try {
     }
 
     $ins = $conn->prepare('
-        INSERT INTO reservations (prestation_id, client_nom, client_email, client_tel, date_debut, date_fin, statut)
-        VALUES (:p, :n, :e, :t, :debut, :fin, \'confirmee\')
+        INSERT INTO Reservations (ServiceId, ClientName, ClientEmail, ClientTel, StartDate, EndDate, Status)
+        VALUES (:p, :n, :e, :t, :debut, :fin, \'confirmed\')
     ');
     $ins->execute([
         ':p'     => $prestationId,
@@ -122,15 +122,15 @@ try {
 
 /* --- Notifications ---------------------------------------------------- */
 $resa = [
-    'id'           => $id,
-    'prestation'   => $prestation['nom'],
-    'duree'        => $duree,
-    'prix'         => $prestation['prix'],
-    'client_nom'   => $nom,
-    'client_email' => $email,
-    'client_tel'   => $tel,
-    'date_debut'   => $dateDebut,
-    'date_fin'     => $dateFin,
+    'Id'           => $id,
+    'prestation'   => $prestation['Service'],
+    'Delay'        => $duree,
+    'Prices'       => $prestation['Prices'],
+    'ClientName'   => $nom,
+    'ClientEmail'  => $email,
+    'ClientTel'    => $tel,
+    'StartDate'    => $dateDebut,
+    'EndDate'      => $dateFin,
     'date_longue'  => fmt_date_longue($date),
     'heure_debut'  => date('H\hi', strtotime($dateDebut)),
     'heure_fin'    => date('H\hi', strtotime($dateFin)),

@@ -1,7 +1,12 @@
 <?php
 /**
- * Logique métier des créneaux : c'est ici que se calcule la disponibilité,
- * en fonction de la durée de la prestation et des réservations déjà prises.
+ * Logique métier des créneaux.
+ *
+ * Les horaires d'ouverture, la pause déjeuner et les fermetures
+ * exceptionnelles sont stockés en base et modifiables depuis
+ * l'administration (menu Disponibilités). Les constantes de
+ * config.php ne servent plus que de valeurs de repli, le temps
+ * qu'une installation soit initialisée.
  */
 
 require_once __DIR__ . '/config.php';
@@ -11,13 +16,133 @@ function esc($v): string
     return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
 }
 
-function jour_ferme(string $date): bool
+/* =======================================================================
+   Lecture des réglages en base, avec mise en cache par requête HTTP
+   ======================================================================= */
+
+/**
+ * Horaires d'ouverture, indexés par jour (0 = dimanche … 6 = samedi).
+ * Valeur : [heureOuverture, heureFermeture] en minutes, ou null si fermé.
+ */
+function horaires_semaine(PDO $conn): array
 {
-    if (in_array($date, FERMETURES, true)) {
+    static $cache = null;
+    if ($cache !== null) {
+        return $cache;
+    }
+
+    $cache = [];
+    try {
+        $lignes = $conn->query('SELECT DayOfWeek, OpenMinute, CloseMinute, IsOpen FROM OpeningHours')->fetchAll();
+        foreach ($lignes as $l) {
+            $cache[(int) $l['DayOfWeek']] = ((int) $l['IsOpen'] === 1)
+                ? [(int) $l['OpenMinute'], (int) $l['CloseMinute']]
+                : null;
+        }
+    } catch (Throwable $e) {
+        $cache = [];
+    }
+
+    // Repli sur config.php si la table est absente ou vide.
+    if (!$cache) {
+        foreach (HORAIRES as $jour => $h) {
+            $cache[$jour] = $h === null ? null : [$h[0] * 60, $h[1] * 60];
+        }
+    }
+
+    return $cache;
+}
+
+/**
+ * Réglages divers : pause déjeuner, granularité, délai minimum, horizon.
+ */
+function reglage(PDO $conn, string $cle, $defaut)
+{
+    static $cache = null;
+
+    if ($cache === null) {
+        $cache = [];
+        try {
+            foreach ($conn->query('SELECT SettingKey, SettingValue FROM Settings')->fetchAll() as $l) {
+                $cache[$l['SettingKey']] = $l['SettingValue'];
+            }
+        } catch (Throwable $e) {
+            $cache = [];
+        }
+    }
+
+    return array_key_exists($cle, $cache) && $cache[$cle] !== '' ? $cache[$cle] : $defaut;
+}
+
+/**
+ * Pause déjeuner en minutes : [début, fin], ou null si aucune.
+ */
+function pause_dejeuner(PDO $conn): ?array
+{
+    $active = (int) reglage($conn, 'BreakEnabled', PAUSE_DEJEUNER !== null ? 1 : 0);
+    if ($active !== 1) {
+        return null;
+    }
+
+    $debut = (int) reglage($conn, 'BreakStart', PAUSE_DEJEUNER ? PAUSE_DEJEUNER[0] * 60 : 720);
+    $fin   = (int) reglage($conn, 'BreakEnd',   PAUSE_DEJEUNER ? PAUSE_DEJEUNER[1] * 60 : 780);
+
+    return $fin > $debut ? [$debut, $fin] : null;
+}
+
+/**
+ * Fermetures exceptionnelles : liste de ['StartDate', 'EndDate', 'Reason'].
+ */
+function fermetures(PDO $conn): array
+{
+    static $cache = null;
+    if ($cache !== null) {
+        return $cache;
+    }
+
+    try {
+        $cache = $conn->query('
+            SELECT Id, StartDate, EndDate, Reason
+            FROM Closures
+            ORDER BY StartDate ASC
+        ')->fetchAll();
+    } catch (Throwable $e) {
+        // Repli sur les dates de config.php
+        $cache = [];
+        foreach (FERMETURES as $d) {
+            $cache[] = ['Id' => 0, 'StartDate' => $d, 'EndDate' => $d, 'Reason' => ''];
+        }
+    }
+
+    return $cache;
+}
+
+/**
+ * Motif de fermeture d'une date, ou null si le salon est ouvert.
+ * Renvoie une chaîne vide si fermé sans motif précisé.
+ */
+function motif_fermeture(PDO $conn, string $date): ?string
+{
+    foreach (fermetures($conn) as $f) {
+        if ($date >= $f['StartDate'] && $date <= $f['EndDate']) {
+            return (string) $f['Reason'];
+        }
+    }
+    return null;
+}
+
+/* =======================================================================
+   Disponibilité
+   ======================================================================= */
+
+function jour_ferme(PDO $conn, string $date): bool
+{
+    if (motif_fermeture($conn, $date) !== null) {
         return true;
     }
+
     $dow = (int) date('w', strtotime($date));
-    return HORAIRES[$dow] === null;
+    return (horaires_semaine($conn)[$dow] ?? null) === null;
 }
 
 /**
@@ -34,23 +159,21 @@ function jour_ferme(string $date): bool
  */
 function creneaux_du_jour(PDO $conn, string $date, int $duree, int $ignorerId = 0, bool $admin = false): array
 {
-    if (jour_ferme($date)) {
+    if (jour_ferme($conn, $date)) {
         return [];
     }
 
-    $dow    = (int) date('w', strtotime($date));
-    [$ho, $hf] = HORAIRES[$dow];
-    $ouverture  = $ho * 60;
-    $fermeture  = $hf * 60;
+    $dow = (int) date('w', strtotime($date));
+    [$ouverture, $fermeture] = horaires_semaine($conn)[$dow];
 
     // Réservations déjà posées ce jour-là (on ignore les annulations)
-    $sql = "SELECT date_debut, date_fin
-            FROM reservations
-            WHERE statut = 'confirmee' AND DATE(date_debut) = :d";
+    $sql = "SELECT StartDate, EndDate
+            FROM Reservations
+            WHERE Status = 'confirmed' AND DATE(StartDate) = :d";
     $params = [':d' => $date];
 
     if ($ignorerId > 0) {
-        $sql .= ' AND id <> :ignore';
+        $sql .= ' AND Id <> :ignore';
         $params[':ignore'] = $ignorerId;
     }
 
@@ -60,16 +183,20 @@ function creneaux_du_jour(PDO $conn, string $date, int $duree, int $ignorerId = 
     $occupes = [];
     foreach ($stmt->fetchAll() as $r) {
         $occupes[] = [
-            'debut' => (int) date('H', strtotime($r['date_debut'])) * 60 + (int) date('i', strtotime($r['date_debut'])),
-            'fin'   => (int) date('H', strtotime($r['date_fin']))   * 60 + (int) date('i', strtotime($r['date_fin'])),
+            'debut' => (int) date('H', strtotime($r['StartDate'])) * 60 + (int) date('i', strtotime($r['StartDate'])),
+            'fin'   => (int) date('H', strtotime($r['EndDate']))   * 60 + (int) date('i', strtotime($r['EndDate'])),
         ];
     }
 
+    $pas   = max(5, (int) reglage($conn, 'SlotStep', PAS_CRENEAU));
+    $pause = pause_dejeuner($conn);
+
     // Seuil : on n'accepte pas un rendez-vous trop imminent
-    $seuil = strtotime('+' . DELAI_MIN_HEURES . ' hours');
+    $delai = (int) reglage($conn, 'MinDelayHours', DELAI_MIN_HEURES);
+    $seuil = strtotime('+' . $delai . ' hours');
 
     $creneaux = [];
-    for ($debut = $ouverture; $debut + $duree <= $fermeture; $debut += PAS_CRENEAU) {
+    for ($debut = $ouverture; $debut + $duree <= $fermeture; $debut += $pas) {
         $fin = $debut + $duree;
 
         $libre = true;
@@ -83,10 +210,8 @@ function creneaux_du_jour(PDO $conn, string $date, int $duree, int $ignorerId = 
         }
 
         // Chevauchement avec la pause déjeuner
-        if ($libre && PAUSE_DEJEUNER !== null) {
-            $pd = PAUSE_DEJEUNER[0] * 60;
-            $pf = PAUSE_DEJEUNER[1] * 60;
-            if ($debut < $pf && $fin > $pd) {
+        if ($libre && $pause !== null) {
+            if ($debut < $pause[1] && $fin > $pause[0]) {
                 $libre = false;
             }
         }
@@ -110,15 +235,17 @@ function creneaux_du_jour(PDO $conn, string $date, int $duree, int $ignorerId = 
 }
 
 /**
- * Liste des jours proposés au client, avec l'information "ouvert ou non".
+ * Liste des jours proposés au client, avec l'information « ouvert ou non ».
  */
-function jours_proposes(): array
+function jours_proposes(PDO $conn): array
 {
     $jours = [];
     $noms  = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
     $mois  = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
 
-    for ($i = 0; $i < JOURS_AHEAD; $i++) {
+    $horizon = max(1, (int) reglage($conn, 'DaysAhead', JOURS_AHEAD));
+
+    for ($i = 0; $i < $horizon; $i++) {
         $ts   = strtotime("+$i day");
         $date = date('Y-m-d', $ts);
         $jours[] = [
@@ -126,7 +253,7 @@ function jours_proposes(): array
             'dow'   => $noms[(int) date('w', $ts)],
             'num'   => date('j', $ts),
             'mois'  => $mois[(int) date('n', $ts) - 1],
-            'ferme' => jour_ferme($date),
+            'ferme' => jour_ferme($conn, $date),
         ];
     }
     return $jours;
@@ -138,4 +265,15 @@ function fmt_date_longue(string $date): string
     $jours = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
     $mois  = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
     return $jours[(int) date('w', $ts)] . ' ' . date('j', $ts) . ' ' . $mois[(int) date('n', $ts) - 1] . ' ' . date('Y', $ts);
+}
+
+function minutes_vers_hhmm(int $m): string
+{
+    return sprintf('%02d:%02d', intdiv($m, 60), $m % 60);
+}
+
+function hhmm_vers_minutes(string $hhmm): int
+{
+    [$h, $m] = array_map('intval', explode(':', $hhmm . ':0'));
+    return $h * 60 + $m;
 }

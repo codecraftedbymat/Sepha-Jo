@@ -18,36 +18,79 @@ $conn = (new Database())->connect();
 /* --- Définition des tables -------------------------------------------- */
 $tables = [
     'users' => "
-        CREATE TABLE IF NOT EXISTS users (
-            id         INT AUTO_INCREMENT PRIMARY KEY,
-            username   VARCHAR(50)  NOT NULL UNIQUE,
-            password   VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        CREATE TABLE IF NOT EXISTS Users (
+            Id         INT AUTO_INCREMENT PRIMARY KEY,
+            Username   VARCHAR(50)  NOT NULL UNIQUE,
+            Password   VARCHAR(255) NOT NULL,
+            CreatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 
     'prestations' => "
-        CREATE TABLE IF NOT EXISTS prestations (
-            id    INT AUTO_INCREMENT PRIMARY KEY,
-            nom   VARCHAR(120) NOT NULL,
-            duree INT NOT NULL,
-            prix  DECIMAL(6,2) DEFAULT NULL,
-            actif TINYINT(1) NOT NULL DEFAULT 1
+        CREATE TABLE IF NOT EXISTS Services (
+            Id      INT AUTO_INCREMENT PRIMARY KEY,
+            Service VARCHAR(120) NOT NULL,
+            Delay   INT NOT NULL,
+            Prices  DECIMAL(6,2) DEFAULT NULL,
+            Active  TINYINT(1) NOT NULL DEFAULT 1
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
 
     'reservations' => "
-        CREATE TABLE IF NOT EXISTS reservations (
-            id            INT AUTO_INCREMENT PRIMARY KEY,
-            prestation_id INT NOT NULL,
-            client_nom    VARCHAR(120) NOT NULL,
-            client_email  VARCHAR(180) NOT NULL,
-            client_tel    VARCHAR(30)  NOT NULL,
-            date_debut    DATETIME NOT NULL,
-            date_fin      DATETIME NOT NULL,
-            statut        ENUM('confirmee','annulee') NOT NULL DEFAULT 'confirmee',
-            created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            CONSTRAINT fk_resa_presta FOREIGN KEY (prestation_id) REFERENCES prestations(id),
-            INDEX idx_debut (date_debut)
+        CREATE TABLE IF NOT EXISTS Reservations (
+            Id          INT AUTO_INCREMENT PRIMARY KEY,
+            ServiceId   INT NOT NULL,
+            ClientName  VARCHAR(120) NOT NULL,
+            ClientEmail VARCHAR(180) NOT NULL,
+            ClientTel   VARCHAR(30)  NOT NULL,
+            StartDate   DATETIME NOT NULL,
+            EndDate     DATETIME NOT NULL,
+            Status      ENUM('confirmed','cancelled') NOT NULL DEFAULT 'confirmed',
+            CreatedAt   TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT fk_resa_service FOREIGN KEY (ServiceId) REFERENCES Services(Id),
+            INDEX idx_startdate (StartDate)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+
+    'openinghours' => "
+        CREATE TABLE IF NOT EXISTS OpeningHours (
+            DayOfWeek   TINYINT NOT NULL PRIMARY KEY,   -- 0 = dimanche … 6 = samedi
+            OpenMinute  SMALLINT NOT NULL DEFAULT 540,  -- minutes depuis minuit
+            CloseMinute SMALLINT NOT NULL DEFAULT 1140,
+            IsOpen      TINYINT(1) NOT NULL DEFAULT 1
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+
+    'closures' => "
+        CREATE TABLE IF NOT EXISTS Closures (
+            Id        INT AUTO_INCREMENT PRIMARY KEY,
+            StartDate DATE NOT NULL,
+            EndDate   DATE NOT NULL,
+            Reason    VARCHAR(160) NOT NULL DEFAULT '',
+            INDEX idx_closure (StartDate, EndDate)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+
+    'settings' => "
+        CREATE TABLE IF NOT EXISTS Settings (
+            SettingKey   VARCHAR(60) NOT NULL PRIMARY KEY,
+            SettingValue VARCHAR(255) NOT NULL DEFAULT ''
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4",
+];
+
+/* --- Horaires par défaut : fermé dimanche et lundi ---------------------- */
+$horairesDefaut = [
+    0 => [540, 1140, 0],   // dimanche  — fermé
+    1 => [540, 1140, 0],   // lundi     — fermé
+    2 => [540, 1140, 1],   // mardi     09h00–19h00
+    3 => [540, 1140, 1],   // mercredi
+    4 => [540, 1140, 1],   // jeudi
+    5 => [540, 1140, 1],   // vendredi
+    6 => [540, 1020, 1],   // samedi    09h00–17h00
+];
+
+$reglagesDefaut = [
+    'BreakEnabled'  => '1',
+    'BreakStart'    => '720',   // 12h00
+    'BreakEnd'      => '780',   // 13h00
+    'SlotStep'      => '15',
+    'MinDelayHours' => '2',
+    'DaysAhead'     => '30',
 ];
 
 /* --- Catalogue Sepha-Jo by Lotte --------------------------------------
@@ -86,7 +129,7 @@ $termine  = false;
 /* --- La page est-elle encore utilisable ? ------------------------------ */
 $verrouille = false;
 try {
-    $n = $conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
+    $n = $conn->query("SELECT COUNT(*) FROM Users")->fetchColumn();
     if ((int) $n > 0) {
         $verrouille = true;
     }
@@ -110,9 +153,22 @@ if (!$verrouille && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $journal[] = "Table « $nom » prête.";
             }
 
-            $dejaLa = (int) $conn->query("SELECT COUNT(*) FROM prestations")->fetchColumn();
+            // Horaires et réglages : posés une seule fois, jamais écrasés
+            $insH = $conn->prepare('INSERT IGNORE INTO OpeningHours (DayOfWeek, OpenMinute, CloseMinute, IsOpen) VALUES (:d, :o, :c, :a)');
+            foreach ($horairesDefaut as $d => [$o, $c, $a]) {
+                $insH->execute([':d' => $d, ':o' => $o, ':c' => $c, ':a' => $a]);
+            }
+            $journal[] = "Horaires d'ouverture initialisés.";
+
+            $insR = $conn->prepare('INSERT IGNORE INTO Settings (SettingKey, SettingValue) VALUES (:k, :v)');
+            foreach ($reglagesDefaut as $k => $v) {
+                $insR->execute([':k' => $k, ':v' => $v]);
+            }
+            $journal[] = "Réglages de réservation initialisés.";
+
+            $dejaLa = (int) $conn->query("SELECT COUNT(*) FROM Services")->fetchColumn();
             if ($dejaLa === 0) {
-                $ins = $conn->prepare('INSERT INTO prestations (nom, duree, prix) VALUES (:n, :d, :p)');
+                $ins = $conn->prepare('INSERT INTO Services (Service, Delay, Prices) VALUES (:n, :d, :p)');
                 foreach ($catalogue as [$nom, $duree, $prix]) {
                     $ins->execute([':n' => $nom, ':d' => $duree, ':p' => $prix]);
                 }
@@ -121,7 +177,7 @@ if (!$verrouille && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $journal[] = "Catalogue déjà rempli ($dejaLa prestations) : aucun ajout.";
             }
 
-            $conn->prepare('INSERT INTO users (username, password) VALUES (:u, :p)')
+            $conn->prepare('INSERT INTO Users (Username, Password) VALUES (:u, :p)')
                  ->execute([
                      ':u' => $identifiant,
                      ':p' => password_hash($motdepasse, PASSWORD_DEFAULT),
@@ -218,8 +274,8 @@ function h($v) { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); }
         <code>public/setup.php</code>, <code>public/admin/generate-hash.php</code> et
         <code>public/test-mail.php</code> de votre dépôt, puis
         <code>git push</code>.<br><br>
-        Pensez ensuite à vérifier les <strong>durées</strong> de chaque prestation dans
-        le menu Prestations : ce sont des estimations, et elles déterminent
+        Pensez ensuite à régler vos <strong>horaires</strong> dans le menu Disponibilités,
+        puis à vérifier les <strong>durées</strong> de chaque prestation dans le menu Prestations : ce sont des estimations, et elles déterminent
         l'espacement des créneaux proposés aux clientes.
     </p>
 

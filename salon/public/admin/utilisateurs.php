@@ -14,11 +14,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $nouveau  = $_POST['nouveau']  ?? '';
         $confirme = $_POST['confirme'] ?? '';
 
-        $stmt = $conn->prepare('SELECT password FROM users WHERE id = :id');
+        $stmt = $conn->prepare('SELECT Password FROM Users WHERE Id = :id');
         $stmt->execute([':id' => $moi]);
         $ligne = $stmt->fetch();
 
-        if (!$ligne || !password_verify($actuel, $ligne['password'])) {
+        if (!$ligne || !password_verify($actuel, $ligne['Password'])) {
             header('Location: utilisateurs.php?err=' . urlencode('Mot de passe actuel incorrect.'));
             exit;
         }
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $conn->prepare('UPDATE users SET password = :p WHERE id = :id')
+        $conn->prepare('UPDATE Users SET Password = :p WHERE Id = :id')
              ->execute([':p' => password_hash($nouveau, PASSWORD_DEFAULT), ':id' => $moi]);
 
         header('Location: utilisateurs.php?ok=' . urlencode('Votre mot de passe a été modifié.'));
@@ -52,14 +52,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $existe = $conn->prepare('SELECT COUNT(*) FROM users WHERE username = :u');
+        $existe = $conn->prepare('SELECT COUNT(*) FROM Users WHERE Username = :u');
         $existe->execute([':u' => $username]);
         if ($existe->fetchColumn() > 0) {
             header('Location: utilisateurs.php?err=' . urlencode('Cet identifiant est déjà utilisé.'));
             exit;
         }
 
-        $conn->prepare('INSERT INTO users (username, password) VALUES (:u, :p)')
+        $conn->prepare('INSERT INTO Users (Username, Password) VALUES (:u, :p)')
              ->execute([':u' => $username, ':p' => password_hash($mdp, PASSWORD_DEFAULT)]);
 
         header('Location: utilisateurs.php?ok=' . urlencode('Compte « ' . $username . ' » créé.'));
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit;
         }
 
-        $conn->prepare('UPDATE users SET password = :p WHERE id = :id')
+        $conn->prepare('UPDATE Users SET Password = :p WHERE Id = :id')
              ->execute([':p' => password_hash($mdp, PASSWORD_DEFAULT), ':id' => $id]);
 
         header('Location: utilisateurs.php?ok=' . urlencode('Mot de passe réinitialisé.'));
@@ -95,18 +95,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: utilisateurs.php?err=' . urlencode('Vous ne pouvez pas supprimer votre propre compte.'));
             exit;
         }
-        if ((int) $conn->query('SELECT COUNT(*) FROM users')->fetchColumn() <= 1) {
+        if ((int) $conn->query('SELECT COUNT(*) FROM Users')->fetchColumn() <= 1) {
             header('Location: utilisateurs.php?err=' . urlencode('Impossible de supprimer le dernier compte.'));
             exit;
         }
 
-        $conn->prepare('DELETE FROM users WHERE id = :id')->execute([':id' => $id]);
+        $conn->prepare('DELETE FROM Users WHERE Id = :id')->execute([':id' => $id]);
         header('Location: utilisateurs.php?ok=' . urlencode('Compte supprimé.'));
         exit;
     }
 }
 
-$utilisateurs = $conn->query('SELECT id, username, created_at FROM users ORDER BY username ASC')->fetchAll();
+$utilisateurs = $conn->query('SELECT Id, Username, CreatedAt FROM Users ORDER BY Username ASC')->fetchAll();
 
 admin_header('Utilisateurs', 'utilisateurs');
 flash();
@@ -167,15 +167,15 @@ flash();
                 <tr>
                     <td>
                         <span class="cell-user">
-                            <span class="avatar"><?= e(initiales($u['username'])) ?></span>
-                            <?= e($u['username']) ?>
-                            <?php if ((int) $u['id'] === $moi) : ?>
+                            <span class="avatar"><?= e(initiales($u['Username'])) ?></span>
+                            <?= e($u['Username']) ?>
+                            <?php if ((int) $u['Id'] === $moi) : ?>
                                 <span class="badge badge-on" style="margin-left:8px;">vous</span>
                             <?php endif; ?>
                         </span>
                     </td>
-                    <td class="mono"><?= e(date('d/m/Y', strtotime($u['created_at']))) ?></td>
-                    <?php if ((int) $u['id'] === $moi) : ?>
+                    <td class="mono"><?= e(date('d/m/Y', strtotime($u['CreatedAt']))) ?></td>
+                    <?php if ((int) $u['Id'] === $moi) : ?>
                         <td colspan="2" class="dim" style="text-align:right;">
                             Utilisez le formulaire « Mon mot de passe » ci-dessus.
                         </td>
@@ -183,7 +183,7 @@ flash();
                         <td>
                             <form method="post" class="inline-form" style="justify-content:flex-start;">
                                 <?= csrf_field() ?>
-                                <input type="hidden" name="id" value="<?= (int) $u['id'] ?>">
+                                <input type="hidden" name="id" value="<?= (int) $u['Id'] ?>">
                                 <input class="cell-input wide" type="text" name="mdp" placeholder="10 caractères min.">
                                 <button class="btn btn-mini btn-primary" name="action" value="reinit">Réinitialiser</button>
                             </form>
@@ -191,9 +191,9 @@ flash();
                         <td class="ta-right">
                             <form method="post" class="inline-form">
                                 <?= csrf_field() ?>
-                                <input type="hidden" name="id" value="<?= (int) $u['id'] ?>">
+                                <input type="hidden" name="id" value="<?= (int) $u['Id'] ?>">
                                 <button class="btn btn-mini btn-danger" name="action" value="supprimer"
-                                        onclick="return confirm('Supprimer le compte « <?= e($u['username']) ?> » ?');">Supprimer</button>
+                                        onclick="return confirm('Supprimer le compte « <?= e($u['Username']) ?> » ?');">Supprimer</button>
                             </form>
                         </td>
                     <?php endif; ?>

@@ -220,19 +220,19 @@
         conf.hidden = false;
 
         $('#confirmSub').textContent =
-            `Un e-mail de confirmation vient d'être envoyé à ${r.client_email}.`;
+            `Un e-mail de confirmation vient d'être envoyé à ${r.ClientEmail}.`;
 
         $('#ticket').innerHTML = [
             ligne('Prestation', r.prestation),
             ligne('Date',       r.date_longue),
             ligne('Horaire',    `${r.heure_debut} – ${r.heure_fin}`),
-            r.prix ? ligne('Tarif', `${r.prix} €`) : '',
-            ligne('Nom',        r.client_nom),
-            ligne('Téléphone',  r.client_tel),
-            ligne('E-mail',     r.client_email),
+            r.Prices ? ligne('Tarif', `${r.Prices} €`) : '',
+            ligne('Nom',        r.ClientName),
+            ligne('Téléphone',  r.ClientTel),
+            ligne('E-mail',     r.ClientEmail),
         ].join('');
 
-        $('#icsLink').href = `api/agenda.php?id=${r.id}`;
+        $('#icsLink').href = `api/agenda.php?id=${r.Id}`;
 
         conf.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }

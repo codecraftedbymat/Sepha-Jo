@@ -624,11 +624,180 @@ a { color: inherit; text-decoration: none; }
 
 
 /* =====================================================================
-   PLANNING HEBDOMADAIRE
+   PLANNING — barre de contrôle commune aux trois vues
    ===================================================================== */
 
-.week-nav { display: flex; align-items: center; gap: 12px; }
-.week-label { font-family: 'Fraunces', serif; font-size: 17px; }
+.planning-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.period-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.period-label {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    min-width: 190px;
+    text-align: center;
+}
+
+.btn-nav {
+    width: 44px;
+    padding: 0;
+    font-size: 20px;
+    line-height: 1;
+    justify-content: center;
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.planning-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.planning-actions .btn {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.planning-summary {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 18px;
+}
+
+
+/* =====================================================================
+   VUE MOIS
+   ===================================================================== */
+
+.month {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border-top: 1px solid var(--line);
+}
+
+.month-dow {
+    background: #FDF9F4;
+    padding: 10px 8px;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+}
+
+.month-cell {
+    background: var(--paper);
+    min-height: 108px;
+    padding: 7px 7px 9px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.month-cell.is-out { background: #FAF6F0; }
+.month-cell.is-out .month-num { color: #C9BCAD; }
+.month-cell.is-closed { background: repeating-linear-gradient(
+    -45deg, transparent, transparent 7px, rgba(61,42,32,.035) 7px, rgba(61,42,32,.035) 14px); }
+
+.month-num {
+    align-self: flex-start;
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    color: var(--ink);
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: .15s;
+}
+
+.month-num:hover { background: var(--accent-soft); color: var(--accent-deep); }
+
+.month-cell.is-today .month-num {
+    background: var(--accent);
+    color: #fff;
+    font-weight: 600;
+}
+
+.month-events {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    overflow: hidden;
+}
+
+.mini-event {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    padding: 3px 6px;
+    border-radius: 5px;
+    background: var(--accent-soft);
+    border-left: 2.5px solid var(--accent);
+    font-size: 11.5px;
+    color: var(--ink);
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: .15s;
+}
+
+.mini-event:hover { background: #F6DEC9; }
+
+.mini-event.is-off {
+    background: #F0EAE3;
+    border-left-color: #C9BCAD;
+    color: var(--muted);
+    text-decoration: line-through;
+}
+
+.me-time {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--accent-deep);
+    flex-shrink: 0;
+}
+
+.mini-event.is-off .me-time { color: var(--muted); }
+
+.me-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mini-more {
+    font-size: 11px;
+    color: var(--accent-deep);
+    padding-left: 6px;
+    text-decoration: none;
+}
+
+.mini-more:hover { text-decoration: underline; }
+
+
+/* =====================================================================
+   VUE SEMAINE
+   ===================================================================== */
 
 .week {
     display: grid;
@@ -641,27 +810,46 @@ a { color: inherit; text-decoration: none; }
     border: 1px solid var(--line);
     border-radius: var(--radius);
     overflow: hidden;
-    min-height: 220px;
+    min-height: 230px;
     display: flex;
     flex-direction: column;
 }
+
 .day.is-today { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(201, 123, 74, .18); }
+.day.is-closed .day-body { background: repeating-linear-gradient(
+    -45deg, transparent, transparent 7px, rgba(61,42,32,.03) 7px, rgba(61,42,32,.03) 14px); }
 
 .day-head {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
-    padding: 12px 14px;
+    padding: 11px 13px;
     border-bottom: 1px solid var(--line);
     background: #FDF9F4;
 }
+
 .day.is-today .day-head { background: var(--accent-soft); }
 
-.day-name { font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
-.day-num { font-family: 'Fraunces', serif; font-size: 18px; }
+.day-name { font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+
+.day-num {
+    font-family: 'Fraunces', serif;
+    font-size: 17px;
+    color: var(--ink);
+    text-decoration: none;
+    width: 27px;
+    height: 27px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: .15s;
+}
+
+.day-num:hover { background: var(--accent); color: #fff; }
 
 .day-body { padding: 10px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-.day-empty { color: var(--line-strong); text-align: center; margin: auto 0; font-size: 18px; }
+.day-empty { color: var(--line-strong); text-align: center; margin: auto 0; font-size: 15px; }
 
 .chip {
     display: flex;
@@ -671,10 +859,118 @@ a { color: inherit; text-decoration: none; }
     border-radius: 10px;
     background: var(--accent-soft);
     border-left: 3px solid var(--accent);
+    text-decoration: none;
+    transition: .15s;
 }
-.chip-time { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; color: var(--accent-deep); }
-.chip-name { font-size: 13px; font-weight: 600; }
+
+.chip:hover { background: #F6DEC9; transform: translateX(2px); }
+
+.chip.is-off {
+    background: #F0EAE3;
+    border-left-color: #C9BCAD;
+    opacity: .65;
+}
+
+.chip-time { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; font-weight: 500; color: var(--accent-deep); }
+.chip.is-off .chip-time { color: var(--muted); text-decoration: line-through; }
+.chip-name { font-size: 13px; font-weight: 600; color: var(--ink); }
 .chip-presta { font-size: 11.5px; color: var(--ink-soft); }
+
+
+/* =====================================================================
+   VUE JOUR — grille horaire proportionnelle
+   ===================================================================== */
+
+.daygrid {
+    position: relative;
+    display: flex;
+    margin-top: 6px;
+}
+
+.daygrid-hours {
+    position: relative;
+    width: 58px;
+    flex-shrink: 0;
+}
+
+.dg-hour {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 0;
+}
+
+.dg-hour span {
+    position: absolute;
+    top: -8px;
+    right: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--muted);
+}
+
+.daygrid-events {
+    position: relative;
+    flex: 1;
+    border-left: 1px solid var(--line);
+    background-image: repeating-linear-gradient(
+        to bottom,
+        var(--line) 0, var(--line) 1px,
+        transparent 1px, transparent 62px
+    );
+}
+
+.dg-pause {
+    position: absolute;
+    left: 0;
+    right: 0;
+    background: repeating-linear-gradient(
+        -45deg, transparent, transparent 7px, rgba(61,42,32,.05) 7px, rgba(61,42,32,.05) 14px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dg-pause span {
+    font-size: 11.5px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--line-strong);
+}
+
+.dg-event {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    padding: 8px 12px;
+    border-radius: 9px;
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    box-shadow: 0 2px 8px -4px rgba(61, 42, 32, .3);
+    text-decoration: none;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    transition: .15s;
+}
+
+.dg-event:hover {
+    background: #F6DEC9;
+    box-shadow: 0 4px 14px -5px rgba(61, 42, 32, .4);
+}
+
+.dg-event.is-off {
+    background: #F0EAE3;
+    border-left-color: #C9BCAD;
+    opacity: .6;
+}
+
+.dge-time { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--accent-deep); }
+.dg-event.is-off .dge-time { color: var(--muted); text-decoration: line-through; }
+.dge-name { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.dge-presta { font-size: 12px; color: var(--ink-soft); }
+.dge-tel { font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--muted); margin-top: 2px; }
 
 
 /* =====================================================================
@@ -685,6 +981,7 @@ a { color: inherit; text-decoration: none; }
     .kpis { grid-template-columns: repeat(2, 1fr); }
     .cols { grid-template-columns: 1fr; }
     .week { grid-template-columns: repeat(4, 1fr); }
+    .month-cell { min-height: 94px; }
 }
 
 @media (max-width: 900px) {
@@ -703,6 +1000,18 @@ a { color: inherit; text-decoration: none; }
     .topbar-date { display: none; }
     .page { padding: 20px 20px 50px; }
     .week { grid-template-columns: repeat(2, 1fr); }
+
+    /* Le mois reste sur 7 colonnes : on réduit plutôt le contenu des cases */
+    .month-cell { min-height: 74px; padding: 5px 4px 6px; }
+    .month-num { font-size: 13px; width: 22px; height: 22px; }
+    .me-name, .mini-more { display: none; }
+    .mini-event { justify-content: center; padding: 2px 3px; }
+
+    .planning-bar { flex-direction: column; align-items: stretch; }
+    .period-nav { justify-content: space-between; }
+    .period-label { min-width: 0; flex: 1; }
+    .planning-actions { justify-content: flex-end; }
+
     .search input { width: 100%; }
     .search { width: 100%; }
     .toolbar { flex-direction: column; align-items: stretch; }
@@ -713,6 +1022,14 @@ a { color: inherit; text-decoration: none; }
     .kpis { grid-template-columns: 1fr; }
     .week { grid-template-columns: 1fr; }
     .day { min-height: 0; }
+
+    /* En mois, on ne garde qu'une pastille par rendez-vous */
+    .month-cell { min-height: 58px; }
+    .me-time { font-size: 9.5px; }
+    .planning-actions { flex-direction: column; align-items: stretch; }
+    .planning-actions .btn { width: 100%; justify-content: center; }
+    .daygrid-hours { width: 46px; }
+    .dg-event { left: 6px; right: 6px; padding: 6px 9px; }
     .row-form .fld input { width: 100%; }
     .row-form .fld { width: 100%; }
 }
@@ -846,4 +1163,70 @@ a { color: inherit; text-decoration: none; }
     .toolbar-right .search {
         flex: 1;
     }
+}
+
+
+/* =====================================================================
+   DISPONIBILITÉS — horaires hebdomadaires
+   ===================================================================== */
+
+.hours-table {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.hours-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: var(--cream);
+    transition: background .15s, opacity .15s;
+}
+
+.hours-row.is-closed {
+    opacity: .5;
+    background: #F3EDE5;
+}
+
+.hours-day {
+    min-width: 150px;
+    font-weight: 600;
+    font-size: 14.5px;
+    color: var(--ink);
+}
+
+.hours-range {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+.hours-range input[type="time"] {
+    height: 38px;
+    padding: 0 11px;
+    background: var(--paper);
+    border: 1.5px solid var(--line);
+    border-radius: 9px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13.5px;
+    color: var(--ink);
+}
+
+.hours-range input[type="time"]:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+@media (max-width: 560px) {
+    .hours-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .hours-range { width: 100%; }
+    .hours-range input[type="time"] { flex: 1; }
 }

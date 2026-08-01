@@ -12,10 +12,10 @@ if ($id <= 0) {
 
 /* --- Réservation courante --------------------------------------------- */
 $stmt = $conn->prepare('
-    SELECT r.*, p.nom AS prestation, p.duree, p.prix
-    FROM reservations r
-    JOIN prestations p ON p.id = r.prestation_id
-    WHERE r.id = :id
+    SELECT r.*, p.Service AS prestation, p.Delay, p.Prices
+    FROM Reservations r
+    JOIN Services p ON p.Id = r.ServiceId
+    WHERE r.Id = :id
 ');
 $stmt->execute([':id' => $id]);
 $resa = $stmt->fetch();
@@ -25,12 +25,12 @@ if (!$resa) {
     exit;
 }
 
-$prestations = $conn->query('SELECT id, nom, duree, prix FROM prestations ORDER BY nom ASC')->fetchAll();
+$prestations = $conn->query('SELECT Id, Service, Delay, Prices FROM Services ORDER BY Service ASC')->fetchAll();
 
 /* --- Sélection en cours ------------------------------------------------ */
-$prestationId = (int) ($_POST['prestation_id'] ?? $resa['prestation_id']);
-$date         = $_POST['date']  ?? date('Y-m-d', strtotime($resa['date_debut']));
-$heure        = $_POST['heure'] ?? date('H:i', strtotime($resa['date_debut']));
+$prestationId = (int) ($_POST['ServiceId'] ?? $resa['ServiceId']);
+$date         = $_POST['date']  ?? date('Y-m-d', strtotime($resa['StartDate']));
+$heure        = $_POST['heure'] ?? date('H:i', strtotime($resa['StartDate']));
 $forcer       = !empty($_POST['forcer']);
 
 $erreur = '';
@@ -39,13 +39,13 @@ $erreur = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'enregistrer') {
     csrf_check();
 
-    $nom      = trim($_POST['client_nom'] ?? '');
-    $email    = trim($_POST['client_email'] ?? '');
-    $tel      = trim($_POST['client_tel'] ?? '');
-    $statut   = ($_POST['statut'] ?? 'confirmee') === 'annulee' ? 'annulee' : 'confirmee';
+    $nom      = trim($_POST['ClientName'] ?? '');
+    $email    = trim($_POST['ClientEmail'] ?? '');
+    $tel      = trim($_POST['ClientTel'] ?? '');
+    $statut   = ($_POST['statut'] ?? 'confirmed') === 'cancelled' ? 'cancelled' : 'confirmed';
     $prevenir = !empty($_POST['prevenir']);
 
-    $stmt = $conn->prepare('SELECT id, nom, duree, prix FROM prestations WHERE id = :id');
+    $stmt = $conn->prepare('SELECT Id, Service, Delay, Prices FROM Services WHERE Id = :id');
     $stmt->execute([':id' => $prestationId]);
     $prestation = $stmt->fetch();
 
@@ -58,14 +58,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'enreg
     } elseif (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || !preg_match('/^\d{2}:\d{2}$/', $heure)) {
         $erreur = "Date ou horaire invalide.";
     } else {
-        $duree     = (int) $prestation['duree'];
+        $duree     = (int) $prestation['Delay'];
         $dateDebut = $date . ' ' . $heure . ':00';
         $dateFin   = date('Y-m-d H:i:s', strtotime($dateDebut) + $duree * 60);
 
         // Sauf forçage explicite, le créneau doit faire partie des créneaux
         // ouverts : horaires du jour, pause déjeuner, chevauchements.
         $valide = true;
-        if (!$forcer && $statut === 'confirmee') {
+        if (!$forcer && $statut === 'confirmed') {
             $libres = array_column(array_filter(
                 creneaux_du_jour($conn, $date, $duree, $id, true),
                 static fn($c) => $c['libre']
@@ -79,27 +79,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'enreg
             // Vérification de chevauchement, même en mode forcé : on avertit
             // plutôt que d'écraser silencieusement un autre rendez-vous.
             $conflit = $conn->prepare("
-                SELECT COUNT(*) FROM reservations
-                WHERE statut = 'confirmee' AND id <> :moi
-                  AND date_debut < :fin AND date_fin > :debut
+                SELECT COUNT(*) FROM Reservations
+                WHERE Status = 'confirmed' AND Id <> :moi
+                  AND StartDate < :fin AND EndDate > :debut
             ");
             $conflit->execute([':moi' => $id, ':debut' => $dateDebut, ':fin' => $dateFin]);
 
-            if ($statut === 'confirmee' && $conflit->fetchColumn() > 0 && !$forcer) {
+            if ($statut === 'confirmed' && $conflit->fetchColumn() > 0 && !$forcer) {
                 $erreur = "Ce créneau chevauche un autre rendez-vous.";
             } else {
                 $avant = [
                     'prestation'  => $resa['prestation'],
-                    'date_longue' => fmt_date_longue(date('Y-m-d', strtotime($resa['date_debut']))),
-                    'heure_debut' => date('H\hi', strtotime($resa['date_debut'])),
-                    'heure_fin'   => date('H\hi', strtotime($resa['date_fin'])),
+                    'date_longue' => fmt_date_longue(date('Y-m-d', strtotime($resa['StartDate']))),
+                    'heure_debut' => date('H\hi', strtotime($resa['StartDate'])),
+                    'heure_fin'   => date('H\hi', strtotime($resa['EndDate'])),
                 ];
 
                 $conn->prepare('
-                    UPDATE reservations
-                    SET prestation_id = :p, client_nom = :n, client_email = :e, client_tel = :t,
-                        date_debut = :debut, date_fin = :fin, statut = :s
-                    WHERE id = :id
+                    UPDATE Reservations
+                    SET ServiceId = :p, ClientName = :n, ClientEmail = :e, ClientTel = :t,
+                        StartDate = :debut, EndDate = :fin, Status = :s
+                    WHERE Id = :id
                 ')->execute([
                     ':p'     => $prestationId,
                     ':n'     => $nom,
@@ -113,17 +113,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'enreg
 
                 $message = 'Réservation mise à jour.';
 
-                if ($prevenir && $statut === 'confirmee') {
+                if ($prevenir && $statut === 'confirmed') {
                     $envoye = notifier_modification([
-                        'id'           => $id,
-                        'prestation'   => $prestation['nom'],
-                        'duree'        => $duree,
-                        'prix'         => $prestation['prix'],
-                        'client_nom'   => $nom,
-                        'client_email' => $email,
-                        'client_tel'   => $tel,
-                        'date_debut'   => $dateDebut,
-                        'date_fin'     => $dateFin,
+                        'Id'           => $id,
+                        'prestation'   => $prestation['Service'],
+                        'Delay'        => $duree,
+                        'Prices'       => $prestation['Prices'],
+                        'ClientName'   => $nom,
+                        'ClientEmail'  => $email,
+                        'ClientTel'    => $tel,
+                        'StartDate'    => $dateDebut,
+                        'EndDate'      => $dateFin,
                         'date_longue'  => fmt_date_longue($date),
                         'heure_debut'  => date('H\hi', strtotime($dateDebut)),
                         'heure_fin'    => date('H\hi', strtotime($dateFin)),
@@ -144,11 +144,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'enreg
 /* --- Créneaux du jour affiché ------------------------------------------ */
 $prestationChoisie = null;
 foreach ($prestations as $p) {
-    if ((int) $p['id'] === $prestationId) {
+    if ((int) $p['Id'] === $prestationId) {
         $prestationChoisie = $p;
     }
 }
-$dureeAffichee = $prestationChoisie ? (int) $prestationChoisie['duree'] : (int) $resa['duree'];
+$dureeAffichee = $prestationChoisie ? (int) $prestationChoisie['Delay'] : (int) $resa['Delay'];
 
 $creneaux = preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)
     ? creneaux_du_jour($conn, $date, $dureeAffichee, $id, true)
@@ -174,18 +174,18 @@ admin_header('Modifier la réservation', 'reservations');
             <h2>Prestation et créneau</h2>
             <span class="dim" style="display:inline;">
                 Actuellement : <?= e($resa['prestation']) ?>,
-                <?= e(fmt_date_longue(date('Y-m-d', strtotime($resa['date_debut'])))) ?>
-                à <?= e(date('H\hi', strtotime($resa['date_debut']))) ?>
+                <?= e(fmt_date_longue(date('Y-m-d', strtotime($resa['StartDate'])))) ?>
+                à <?= e(date('H\hi', strtotime($resa['StartDate']))) ?>
             </span>
         </div>
 
         <div class="row-form" style="margin-bottom:20px;">
             <div class="fld grow">
-                <label for="prestation_id">Prestation</label>
-                <select id="prestation_id" name="prestation_id" onchange="document.getElementById('formModif').submit();">
+                <label for="ServiceId">Prestation</label>
+                <select id="ServiceId" name="ServiceId" onchange="document.getElementById('formModif').submit();">
                     <?php foreach ($prestations as $p) : ?>
-                        <option value="<?= (int) $p['id'] ?>" <?= (int) $p['id'] === $prestationId ? 'selected' : '' ?>>
-                            <?= e($p['nom']) ?> — <?= (int) $p['duree'] ?> min<?= $p['prix'] !== null ? ' — ' . e($p['prix']) . ' €' : '' ?>
+                        <option value="<?= (int) $p['Id'] ?>" <?= (int) $p['Id'] === $prestationId ? 'selected' : '' ?>>
+                            <?= e($p['Service']) ?> — <?= (int) $p['Delay'] ?> min<?= $p['Prices'] !== null ? ' — ' . e($p['Prices']) . ' €' : '' ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -228,22 +228,22 @@ admin_header('Modifier la réservation', 'reservations');
         <div class="card-head"><h2>Cliente</h2></div>
         <div class="form-grid">
             <div class="fld">
-                <label for="client_nom">Nom</label>
-                <input id="client_nom" name="client_nom" type="text" value="<?= e($_POST['client_nom'] ?? $resa['client_nom']) ?>">
+                <label for="ClientName">Nom</label>
+                <input id="ClientName" name="ClientName" type="text" value="<?= e($_POST['ClientName'] ?? $resa['ClientName']) ?>">
             </div>
             <div class="fld">
-                <label for="client_tel">Téléphone</label>
-                <input id="client_tel" name="client_tel" type="text" value="<?= e($_POST['client_tel'] ?? $resa['client_tel']) ?>">
+                <label for="ClientTel">Téléphone</label>
+                <input id="ClientTel" name="ClientTel" type="text" value="<?= e($_POST['ClientTel'] ?? $resa['ClientTel']) ?>">
             </div>
             <div class="fld full">
-                <label for="client_email">E-mail</label>
-                <input id="client_email" name="client_email" type="email" value="<?= e($_POST['client_email'] ?? $resa['client_email']) ?>">
+                <label for="ClientEmail">E-mail</label>
+                <input id="ClientEmail" name="ClientEmail" type="email" value="<?= e($_POST['ClientEmail'] ?? $resa['ClientEmail']) ?>">
             </div>
             <div class="fld">
                 <label for="statut">Statut</label>
                 <select id="statut" name="statut">
-                    <option value="confirmee" <?= ($_POST['statut'] ?? $resa['statut']) === 'confirmee' ? 'selected' : '' ?>>Confirmée</option>
-                    <option value="annulee"   <?= ($_POST['statut'] ?? $resa['statut']) === 'annulee'   ? 'selected' : '' ?>>Annulée</option>
+                    <option value="confirmed" <?= ($_POST['statut'] ?? $resa['Status']) === 'confirmed' ? 'selected' : '' ?>>Confirmée</option>
+                    <option value="cancelled"   <?= ($_POST['statut'] ?? $resa['Status']) === 'cancelled'   ? 'selected' : '' ?>>Annulée</option>
                 </select>
             </div>
         </div>

@@ -9,17 +9,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
 
     if ($action === 'annuler' && $id) {
-        $conn->prepare("UPDATE reservations SET statut = 'annulee' WHERE id = :id")->execute([':id' => $id]);
+        $conn->prepare("UPDATE Reservations SET Status = 'cancelled' WHERE Id = :id")->execute([':id' => $id]);
         header('Location: reservations.php?ok=' . urlencode('Réservation annulée.'));
         exit;
     }
     if ($action === 'retablir' && $id) {
-        $conn->prepare("UPDATE reservations SET statut = 'confirmee' WHERE id = :id")->execute([':id' => $id]);
+        $conn->prepare("UPDATE Reservations SET Status = 'confirmed' WHERE Id = :id")->execute([':id' => $id]);
         header('Location: reservations.php?ok=' . urlencode('Réservation rétablie.'));
         exit;
     }
     if ($action === 'supprimer' && $id) {
-        $conn->prepare('DELETE FROM reservations WHERE id = :id')->execute([':id' => $id]);
+        $conn->prepare('DELETE FROM Reservations WHERE Id = :id')->execute([':id' => $id]);
         header('Location: reservations.php?ok=' . urlencode('Réservation supprimée.'));
         exit;
     }
@@ -34,29 +34,29 @@ $params = [];
 
 switch ($filtre) {
     case 'avenir':
-        $where[] = "r.date_debut >= CURDATE() AND r.statut = 'confirmee'";
+        $where[] = "r.StartDate >= CURDATE() AND r.Status = 'confirmed'";
         break;
     case 'passees':
-        $where[] = "r.date_debut < CURDATE() AND r.statut = 'confirmee'";
+        $where[] = "r.StartDate < CURDATE() AND r.Status = 'confirmed'";
         break;
     case 'annulees':
-        $where[] = "r.statut = 'annulee'";
+        $where[] = "r.Status = 'cancelled'";
         break;
     // 'toutes' : aucun filtre
 }
 
 if ($recherche !== '') {
-    $where[] = '(r.client_nom LIKE :q OR r.client_email LIKE :q OR r.client_tel LIKE :q)';
+    $where[] = '(r.ClientName LIKE :q OR r.ClientEmail LIKE :q OR r.ClientTel LIKE :q)';
     $params[':q'] = '%' . $recherche . '%';
 }
 
-$sql = "SELECT r.*, p.nom AS prestation, p.duree, p.prix
-        FROM reservations r
-        JOIN prestations p ON p.id = r.prestation_id";
+$sql = "SELECT r.*, p.Service AS prestation, p.Delay, p.Prices
+        FROM Reservations r
+        JOIN Services p ON p.Id = r.ServiceId";
 if ($where) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
 }
-$sql .= $filtre === 'passees' ? ' ORDER BY r.date_debut DESC' : ' ORDER BY r.date_debut ASC';
+$sql .= $filtre === 'passees' ? ' ORDER BY r.StartDate DESC' : ' ORDER BY r.StartDate ASC';
 
 $stmt = $conn->prepare($sql);
 $stmt->execute($params);
@@ -110,35 +110,35 @@ flash();
                 </thead>
                 <tbody>
                 <?php foreach ($reservations as $r) : ?>
-                    <tr<?= $r['statut'] === 'annulee' ? ' class="row-off"' : '' ?>>
+                    <tr<?= $r['Status'] === 'cancelled' ? ' class="row-off"' : '' ?>>
                         <td>
                             <span class="cell-user">
-                                <span class="avatar"><?= e(initiales($r['client_nom'])) ?></span>
-                                <?= e($r['client_nom']) ?>
+                                <span class="avatar"><?= e(initiales($r['ClientName'])) ?></span>
+                                <?= e($r['ClientName']) ?>
                             </span>
                         </td>
                         <td>
                             <?= e($r['prestation']) ?>
-                            <span class="dim"><?= (int) $r['duree'] ?> min</span>
+                            <span class="dim"><?= (int) $r['Delay'] ?> min</span>
                         </td>
-                        <td><?= e(date('d/m/Y', strtotime($r['date_debut']))) ?></td>
-                        <td class="mono"><?= e(fmt_heure($r['date_debut'])) ?> – <?= e(fmt_heure($r['date_fin'])) ?></td>
+                        <td><?= e(date('d/m/Y', strtotime($r['StartDate']))) ?></td>
+                        <td class="mono"><?= e(fmt_heure($r['StartDate'])) ?> – <?= e(fmt_heure($r['EndDate'])) ?></td>
                         <td>
-                            <a class="link" href="mailto:<?= e($r['client_email']) ?>"><?= e($r['client_email']) ?></a>
-                            <span class="dim"><?= e($r['client_tel']) ?></span>
+                            <a class="link" href="mailto:<?= e($r['ClientEmail']) ?>"><?= e($r['ClientEmail']) ?></a>
+                            <span class="dim"><?= e($r['ClientTel']) ?></span>
                         </td>
                         <td>
-                            <span class="badge badge-<?= $r['statut'] === 'annulee' ? 'off' : 'on' ?>">
-                                <?= $r['statut'] === 'annulee' ? 'Annulée' : 'Confirmée' ?>
+                            <span class="badge badge-<?= $r['Status'] === 'cancelled' ? 'off' : 'on' ?>">
+                                <?= $r['Status'] === 'cancelled' ? 'Annulée' : 'Confirmée' ?>
                             </span>
                         </td>
                         <td class="ta-right">
                             <div class="inline-form">
-                                <a class="btn btn-mini btn-primary" href="modifier-reservation.php?id=<?= (int) $r['id'] ?>">Modifier</a>
+                                <a class="btn btn-mini btn-primary" href="modifier-reservation.php?id=<?= (int) $r['Id'] ?>">Modifier</a>
                                 <form method="post" class="inline-form">
                                     <?= csrf_field() ?>
-                                    <input type="hidden" name="id" value="<?= (int) $r['id'] ?>">
-                                    <?php if ($r['statut'] === 'confirmee') : ?>
+                                    <input type="hidden" name="id" value="<?= (int) $r['Id'] ?>">
+                                    <?php if ($r['Status'] === 'confirmed') : ?>
                                         <button class="btn btn-mini" name="action" value="annuler">Annuler</button>
                                     <?php else : ?>
                                         <button class="btn btn-mini" name="action" value="retablir">Rétablir</button>

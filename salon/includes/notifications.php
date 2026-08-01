@@ -32,7 +32,7 @@ function generer_ics(array $r, int $sequence = 0): string
 
     $description = sprintf(
         'Client : %s\\nTéléphone : %s\\nE-mail : %s\\nPrestation : %s (%d min)',
-        $r['client_nom'], $r['client_tel'], $r['client_email'], $r['prestation'], $r['duree']
+        $r['ClientName'], $r['ClientTel'], $r['ClientEmail'], $r['prestation'], $r['Delay']
     );
 
     $lignes = [
@@ -42,12 +42,12 @@ function generer_ics(array $r, int $sequence = 0): string
         'CALSCALE:GREGORIAN',
         'METHOD:REQUEST',
         'BEGIN:VEVENT',
-        'UID:resa-' . $r['id'] . '@' . parse_url(SALON_URL, PHP_URL_HOST),
+        'UID:resa-' . $r['Id'] . '@' . parse_url(SALON_URL, PHP_URL_HOST),
         'DTSTAMP:' . gmdate('Ymd\THis\Z'),
         'SEQUENCE:' . $sequence,
-        'DTSTART;TZID=Europe/Paris:' . $fmt($r['date_debut']),
-        'DTEND;TZID=Europe/Paris:'   . $fmt($r['date_fin']),
-        'SUMMARY:' . $r['prestation'] . ' — ' . $r['client_nom'],
+        'DTSTART;TZID=Europe/Paris:' . $fmt($r['StartDate']),
+        'DTEND;TZID=Europe/Paris:'   . $fmt($r['EndDate']),
+        'SUMMARY:' . $r['prestation'] . ' — ' . $r['ClientName'],
         'DESCRIPTION:' . $description,
         'LOCATION:' . SALON_ADRESSE,
         'STATUS:CONFIRMED',
@@ -184,18 +184,18 @@ function notifier_client(array $r): bool
 {
     $html = gabarit_mail(
         'Votre rendez-vous est confirmé',
-        'Bonjour ' . $r['client_nom'] . ', nous vous confirmons votre rendez-vous. Le fichier joint vous permet de l\'ajouter à votre agenda en un clic.',
+        'Bonjour ' . $r['ClientName'] . ', nous vous confirmons votre rendez-vous. Le fichier joint vous permet de l\'ajouter à votre agenda en un clic.',
         [
             'Prestation' => $r['prestation'],
             'Date'       => $r['date_longue'],
             'Horaire'    => $r['heure_debut'] . ' – ' . $r['heure_fin'],
-            'Durée'      => $r['duree'] . ' min',
-            'Tarif'      => $r['prix'] !== null ? $r['prix'] . ' €' : '—',
+            'Durée'      => $r['Delay'] . ' min',
+            'Tarif'      => $r['Prices'] !== null ? $r['Prices'] . ' €' : '—',
         ],
         'Un empêchement ? Prévenez-nous au moins 24 h à l\'avance par téléphone.'
     );
 
-    return envoyer_mail($r['client_email'], 'Confirmation de votre rendez-vous — ' . SALON_NOM, $html, generer_ics($r));
+    return envoyer_mail($r['ClientEmail'], 'Confirmation de votre rendez-vous — ' . SALON_NOM, $html, generer_ics($r));
 }
 
 function notifier_salon(array $r): bool
@@ -204,16 +204,16 @@ function notifier_salon(array $r): bool
         'Nouvelle réservation',
         'Une réservation vient d\'être enregistrée sur le site. Ouvrez la pièce jointe pour l\'ajouter à l\'agenda du salon.',
         [
-            'Client'     => $r['client_nom'],
-            'Téléphone'  => $r['client_tel'],
-            'E-mail'     => $r['client_email'],
+            'Client'     => $r['ClientName'],
+            'Téléphone'  => $r['ClientTel'],
+            'E-mail'     => $r['ClientEmail'],
             'Prestation' => $r['prestation'],
             'Date'       => $r['date_longue'],
             'Horaire'    => $r['heure_debut'] . ' – ' . $r['heure_fin'],
         ]
     );
 
-    return envoyer_mail(SALON_EMAIL, 'Nouvelle réservation : ' . $r['client_nom'] . ' — ' . $r['date_longue'], $html, generer_ics($r));
+    return envoyer_mail(SALON_EMAIL, 'Nouvelle réservation : ' . $r['ClientName'] . ' — ' . $r['date_longue'], $html, generer_ics($r));
 }
 
 function notifier_modification(array $r, array $avant): bool
@@ -234,10 +234,10 @@ function notifier_modification(array $r, array $avant): bool
         'Prestation' => $r['prestation'],
         'Date'       => $r['date_longue'],
         'Horaire'    => $r['heure_debut'] . ' – ' . $r['heure_fin'],
-        'Durée'      => $r['duree'] . ' min',
+        'Durée'      => $r['Delay'] . ' min',
     ];
-    if ($r['prix'] !== null) {
-        $lignes['Tarif'] = $r['prix'] . ' €';
+    if ($r['Prices'] !== null) {
+        $lignes['Tarif'] = $r['Prices'] . ' €';
     }
     foreach ($changements as $quoi => $detail) {
         $lignes['Modifié — ' . $quoi] = $detail;
@@ -245,7 +245,7 @@ function notifier_modification(array $r, array $avant): bool
 
     $html = gabarit_mail(
         'Votre rendez-vous a été modifié',
-        'Bonjour ' . $r['client_nom'] . ', votre rendez-vous a été déplacé. Voici les nouvelles informations. Le fichier joint met à jour votre agenda.',
+        'Bonjour ' . $r['ClientName'] . ', votre rendez-vous a été déplacé. Voici les nouvelles informations. Le fichier joint met à jour votre agenda.',
         $lignes,
         'Ce créneau ne vous convient pas ? Contactez-nous, nous trouverons une autre solution.'
     );
@@ -253,7 +253,7 @@ function notifier_modification(array $r, array $avant): bool
     // Séquence 1 : indique aux agendas qu'il s'agit d'une mise à jour du
     // même événement, et non d'un nouveau rendez-vous.
     return envoyer_mail(
-        $r['client_email'],
+        $r['ClientEmail'],
         'Modification de votre rendez-vous — ' . SALON_NOM,
         $html,
         generer_ics($r, 1)

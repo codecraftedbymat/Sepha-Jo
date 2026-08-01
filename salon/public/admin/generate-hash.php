@@ -1,6 +1,6 @@
 <?php
 /**
- * Utilitaire de développement : génère le hash à placer dans users.password.
+ * Utilitaire de développement : génère le hash à placer dans Users.Password.
  *
  *   1. Ouvrez cette page dans le navigateur
  *   2. Saisissez le mot de passe voulu
@@ -62,10 +62,10 @@ function h($v) { return htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8'); }
         <div class="out"><?= h($hash) ?></div>
 
         <p class="lab">A. Pour CRÉER le compte (première fois)</p>
-        <div class="out">INSERT INTO users (username, password) VALUES ('<?= h($identifiant) ?>', '<?= h($hash) ?>');</div>
+        <div class="out">INSERT INTO Users (Username, Password) VALUES ('<?= h($identifiant) ?>', '<?= h($hash) ?>');</div>
 
         <p class="lab">B. Pour MODIFIER le mot de passe d'un compte existant</p>
-        <div class="out">UPDATE users SET password = '<?= h($hash) ?>' WHERE username = '<?= h($identifiant) ?>';</div>
+        <div class="out">UPDATE Users SET Password = '<?= h($hash) ?>' WHERE Username = '<?= h($identifiant) ?>';</div>
 
         <p class="hint">
             Si la requête A renvoie « Duplicate entry », c'est que le compte existe déjà :

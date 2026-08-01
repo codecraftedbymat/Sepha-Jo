@@ -16,10 +16,10 @@ if ($id <= 0) {
 
 $conn = (new Database())->connect();
 $stmt = $conn->prepare('
-    SELECT r.*, p.nom AS prestation, p.duree
-    FROM reservations r
-    JOIN prestations p ON p.id = r.prestation_id
-    WHERE r.id = :id
+    SELECT r.*, p.Service AS prestation, p.Delay
+    FROM Reservations r
+    JOIN Services p ON p.Id = r.ServiceId
+    WHERE r.Id = :id
 ');
 $stmt->execute([':id' => $id]);
 $r = $stmt->fetch();

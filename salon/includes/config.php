@@ -38,9 +38,12 @@ define('SALON_URL', env('SALON_URL',
         : 'http://localhost/salon/public'
 ));
 
-/* --- Horaires d'ouverture --------------------------------------------
-   Clé = jour (0 = dimanche … 6 = samedi)
-   Valeur = [heure d'ouverture, heure de fermeture] ou null si fermé.
+/* --- Horaires : VALEURS DE REPLI SEULEMENT ---------------------------
+   Les horaires réels, la pause et les fermetures sont désormais stockés
+   en base et se modifient depuis l'administration, menu Disponibilités.
+   Les constantes ci-dessous ne servent qu'au tout premier démarrage,
+   avant l'exécution de setup.php. Les modifier n'a aucun effet une fois
+   l'installation faite.
    --------------------------------------------------------------------- */
 const HORAIRES = [
     0 => null,        // dimanche

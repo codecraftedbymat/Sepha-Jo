@@ -5,13 +5,13 @@ require_once __DIR__ . '/../includes/creneaux.php';
 $conn = (new Database())->connect();
 
 $prestations = $conn->query('
-    SELECT id, nom, duree, prix
-    FROM prestations
-    WHERE actif = 1
-    ORDER BY nom ASC
+    SELECT Id, Service, Delay, Prices
+    FROM Services
+    WHERE Active = 1
+    ORDER BY Service ASC
 ')->fetchAll();
 
-$jours = jours_proposes();
+$jours = jours_proposes($conn);
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -44,15 +44,15 @@ $jours = jours_proposes();
             <div class="services">
                 <?php foreach ($prestations as $p) : ?>
                     <button type="button" class="svc"
-                            data-id="<?= (int) $p['id'] ?>"
-                            data-nom="<?= esc($p['nom']) ?>"
-                            data-duree="<?= (int) $p['duree'] ?>"
-                            data-prix="<?= $p['prix'] !== null ? esc($p['prix']) : '' ?>">
-                        <span class="svc-nom"><?= esc($p['nom']) ?></span>
+                            data-id="<?= (int) $p['Id'] ?>"
+                            data-nom="<?= esc($p['Service']) ?>"
+                            data-duree="<?= (int) $p['Delay'] ?>"
+                            data-prix="<?= $p['Prices'] !== null ? esc($p['Prices']) : '' ?>">
+                        <span class="svc-nom"><?= esc($p['Service']) ?></span>
                         <span class="svc-meta">
-                            <span class="pill"><?= (int) $p['duree'] ?> min</span>
-                            <?php if ($p['prix'] !== null) : ?>
-                                <span class="prix"><?= number_format((float) $p['prix'], 0, ',', ' ') ?> €</span>
+                            <span class="pill"><?= (int) $p['Delay'] ?> min</span>
+                            <?php if ($p['Prices'] !== null) : ?>
+                                <span class="prix"><?= number_format((float) $p['Prices'], 0, ',', ' ') ?> €</span>
                             <?php endif; ?>
                         </span>
                     </button>

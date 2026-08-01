@@ -24,17 +24,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $database = new Database();
         $conn = $database->connect();
 
-        $stmt = $conn->prepare('SELECT id, username, password FROM users WHERE username = :u LIMIT 1');
+        $stmt = $conn->prepare('SELECT Id, Username, Password FROM Users WHERE Username = :u LIMIT 1');
         $stmt->execute([':u' => $username]);
         $user = $stmt->fetch();
 
         // Message identique dans les deux cas : on ne révèle pas si le compte existe.
-        if ($user === false || !password_verify($password, $user['password'])) {
+        if ($user === false || !password_verify($password, $user['Password'])) {
             $error = "Identifiant ou mot de passe incorrect.";
         } else {
             session_regenerate_id(true);
-            $_SESSION['user_id']       = $user['id'];
-            $_SESSION['username']      = $user['username'];
+            $_SESSION['user_id']       = $user['Id'];
+            $_SESSION['username']      = $user['Username'];
             $_SESSION['last_activity'] = time();
 
             header('Location: index.php');

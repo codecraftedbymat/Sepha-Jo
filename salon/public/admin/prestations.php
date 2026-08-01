@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: prestations.php?err=' . urlencode('Nom et durée sont obligatoires.'));
             exit;
         }
-        $conn->prepare('INSERT INTO prestations (nom, duree, prix, actif) VALUES (:n, :d, :p, 1)')
+        $conn->prepare('INSERT INTO Services (Service, Delay, Prices, Active) VALUES (:n, :d, :p, 1)')
              ->execute([':n' => $nom, ':d' => $duree, ':p' => $prix]);
         header('Location: prestations.php?ok=' . urlencode('Prestation ajoutée.'));
         exit;
@@ -27,28 +27,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $duree = (int) ($_POST['duree'] ?? 0);
         $prix  = $_POST['prix'] === '' ? null : (float) $_POST['prix'];
 
-        $conn->prepare('UPDATE prestations SET nom = :n, duree = :d, prix = :p WHERE id = :id')
+        $conn->prepare('UPDATE Services SET Service = :n, Delay = :d, Prices = :p WHERE Id = :id')
              ->execute([':n' => $nom, ':d' => $duree, ':p' => $prix, ':id' => $id]);
         header('Location: prestations.php?ok=' . urlencode('Prestation mise à jour.'));
         exit;
     }
 
     if ($action === 'basculer' && $id) {
-        $conn->prepare('UPDATE prestations SET actif = 1 - actif WHERE id = :id')->execute([':id' => $id]);
+        $conn->prepare('UPDATE Services SET Active = 1 - Active WHERE Id = :id')->execute([':id' => $id]);
         header('Location: prestations.php');
         exit;
     }
 
     if ($action === 'supprimer' && $id) {
         // Une prestation déjà réservée ne peut pas être supprimée : on la désactive.
-        $used = $conn->prepare('SELECT COUNT(*) FROM reservations WHERE prestation_id = :id');
+        $used = $conn->prepare('SELECT COUNT(*) FROM Reservations WHERE ServiceId = :id');
         $used->execute([':id' => $id]);
 
         if ($used->fetchColumn() > 0) {
-            $conn->prepare('UPDATE prestations SET actif = 0 WHERE id = :id')->execute([':id' => $id]);
+            $conn->prepare('UPDATE Services SET Active = 0 WHERE Id = :id')->execute([':id' => $id]);
             header('Location: prestations.php?err=' . urlencode('Prestation déjà réservée : elle a été désactivée plutôt que supprimée.'));
         } else {
-            $conn->prepare('DELETE FROM prestations WHERE id = :id')->execute([':id' => $id]);
+            $conn->prepare('DELETE FROM Services WHERE Id = :id')->execute([':id' => $id]);
             header('Location: prestations.php?ok=' . urlencode('Prestation supprimée.'));
         }
         exit;
@@ -56,9 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $prestations = $conn->query('
-    SELECT p.*, (SELECT COUNT(*) FROM reservations r WHERE r.prestation_id = p.id) AS nb_rdv
-    FROM prestations p
-    ORDER BY p.actif DESC, p.nom ASC
+    SELECT p.*, (SELECT COUNT(*) FROM Reservations r WHERE r.ServiceId = p.Id) AS nb_rdv
+    FROM Services p
+    ORDER BY p.Active DESC, p.Service ASC
 ')->fetchAll();
 
 admin_header('Prestations', 'prestations');
@@ -106,22 +106,22 @@ flash();
                 </thead>
                 <tbody>
                 <?php foreach ($prestations as $p) : ?>
-                    <tr<?= $p['actif'] ? '' : ' class="row-off"' ?>>
+                    <tr<?= $p['Active'] ? '' : ' class="row-off"' ?>>
                         <form method="post" class="contents">
                         <?= csrf_field() ?>
-                        <input type="hidden" name="id" value="<?= (int) $p['id'] ?>">
-                        <td><input class="cell-input wide" type="text" name="nom" value="<?= e($p['nom']) ?>"></td>
-                        <td><input class="cell-input" type="number" name="duree" min="5" step="5" value="<?= (int) $p['duree'] ?>"></td>
-                        <td><input class="cell-input" type="number" name="prix" min="0" step="0.5" value="<?= $p['prix'] !== null ? e($p['prix']) : '' ?>"></td>
+                        <input type="hidden" name="id" value="<?= (int) $p['Id'] ?>">
+                        <td><input class="cell-input wide" type="text" name="nom" value="<?= e($p['Service']) ?>"></td>
+                        <td><input class="cell-input" type="number" name="duree" min="5" step="5" value="<?= (int) $p['Delay'] ?>"></td>
+                        <td><input class="cell-input" type="number" name="prix" min="0" step="0.5" value="<?= $p['Prices'] !== null ? e($p['Prices']) : '' ?>"></td>
                         <td class="mono"><?= (int) $p['nb_rdv'] ?></td>
                         <td>
-                            <span class="badge badge-<?= $p['actif'] ? 'on' : 'off' ?>">
-                                <?= $p['actif'] ? 'Active' : 'Masquée' ?>
+                            <span class="badge badge-<?= $p['Active'] ? 'on' : 'off' ?>">
+                                <?= $p['Active'] ? 'Active' : 'Masquée' ?>
                             </span>
                         </td>
                         <td class="ta-right">
                             <button class="btn btn-mini btn-primary" name="action" value="modifier">Enregistrer</button>
-                            <button class="btn btn-mini" name="action" value="basculer"><?= $p['actif'] ? 'Masquer' : 'Activer' ?></button>
+                            <button class="btn btn-mini" name="action" value="basculer"><?= $p['Active'] ? 'Masquer' : 'Activer' ?></button>
                             <button class="btn btn-mini btn-danger" name="action" value="supprimer"
                                     onclick="return confirm('Supprimer cette prestation ?');">Suppr.</button>
                         </td>
