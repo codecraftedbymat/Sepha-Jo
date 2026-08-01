@@ -7,26 +7,14 @@ FROM php:8.2-apache
 
 # Marqueur de version : le modifier invalide le cache Docker et force la
 # reconstruction complète des couches suivantes.
-ENV BUILD_REV=4
+ENV BUILD_REV=5
 
 # --- Dépendances ------------------------------------------------------
 RUN apt-get update \
     && apt-get install -y --no-install-recommends unzip libzip-dev \
     && docker-php-ext-install pdo pdo_mysql zip \
-    && rm -rf /var/lib/apt/lists/*
-
-# --- Modules Apache ---------------------------------------------------
-# Apache refuse de démarrer si plusieurs MPM sont chargés. Plutôt que de
-# s'en remettre à a2dismod, on supprime tous les liens MPM de
-# mods-enabled/ puis on n'en réactive qu'un seul.
-RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
-    && ln -sf ../mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
-    && ln -sf ../mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
     && a2enmod rewrite \
-    && echo "--- MPM presents dans mods-enabled ---" \
-    && ls -1 /etc/apache2/mods-enabled/ | grep -i mpm \
-    && echo "--- Test de configuration ---" \
-    && apache2ctl configtest
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www/html
 COPY . /var/www/html
@@ -43,9 +31,17 @@ RUN chown -R www-data:www-data /var/www/html
 # =====================================================================
 #  Démarrage
 #
-#  Le port est imposé par Railway via la variable PORT, connue seulement
-#  à l'exécution : la configuration est donc écrite au lancement, Apache
-#  ne substituant pas les variables d'environnement dans ses fichiers.
+#  Deux corrections doivent impérativement se faire ICI, au lancement du
+#  conteneur, et non pendant le build :
+#
+#  1. Les MPM. Le script apache2-foreground de l'image officielle
+#     réactive mpm_event à chaque démarrage, annulant tout nettoyage fait
+#     au build. Apache refuse alors de démarrer, deux MPM étant chargés.
+#     On supprime donc les liens juste avant de lancer le serveur.
+#
+#  2. Le port, imposé par Railway via la variable PORT et connu seulement
+#     à l'exécution : Apache ne substitue pas les variables
+#     d'environnement dans ses fichiers de configuration.
 #
 #  DocumentRoot pointe sur public/ : includes/, api/ et les fichiers de
 #  configuration restent hors du dossier servi.
@@ -53,6 +49,12 @@ RUN chown -R www-data:www-data /var/www/html
 RUN printf '%s\n' \
     '#!/bin/sh' \
     'set -e' \
+    '' \
+    '# Un seul MPM : on retire les liens puis on ne remet que prefork.' \
+    'rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf' \
+    'ln -sf ../mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load' \
+    'ln -sf ../mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf' \
+    '' \
     'PORT="${PORT:-80}"' \
     'echo "Listen ${PORT}" > /etc/apache2/ports.conf' \
     'cat > /etc/apache2/sites-available/000-default.conf <<EOF' \
@@ -67,12 +69,23 @@ RUN printf '%s\n' \
     '    CustomLog /proc/self/fd/1 combined' \
     '</VirtualHost>' \
     'EOF' \
+    '' \
     'echo "--- MPM dans mods-enabled ---"' \
     'ls -1 /etc/apache2/mods-enabled/ | grep -i mpm || echo "(aucun)"' \
-    'echo "--- Test de configuration ---"' \
-    'apache2ctl configtest || true' \
+    'apache2ctl configtest' \
     'echo "Apache demarre sur le port ${PORT}"' \
-    'exec apache2-foreground' \
+    '' \
+    '# apache2-foreground reactiverait mpm_event : on lance donc httpd' \
+    '# directement, en conservant les variables attendues par la config.' \
+    'export APACHE_RUN_USER=www-data' \
+    'export APACHE_RUN_GROUP=www-data' \
+    'export APACHE_PID_FILE=/var/run/apache2/apache2.pid' \
+    'export APACHE_RUN_DIR=/var/run/apache2' \
+    'export APACHE_LOCK_DIR=/var/lock/apache2' \
+    'export APACHE_LOG_DIR=/var/log/apache2' \
+    'mkdir -p "$APACHE_RUN_DIR" "$APACHE_LOCK_DIR" "$APACHE_LOG_DIR"' \
+    'rm -f "$APACHE_PID_FILE"' \
+    'exec apache2 -DFOREGROUND' \
     > /usr/local/bin/demarrer.sh \
     && chmod +x /usr/local/bin/demarrer.sh
 
