@@ -16,10 +16,7 @@ WORKDIR /var/www/html
 COPY . /var/www/html
 
 # PHPMailer, pour l'envoi SMTP des confirmations.
-#
-# L'installation est TOLÉRANTE À L'ÉCHEC : si Composer ne s'exécute pas,
-# le build se poursuit. Le site fonctionne alors normalement, seuls les
-# e-mails ne partent pas.
+# Tolérant à l'échec : un problème d'e-mail ne doit pas bloquer le déploiement.
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress \
@@ -28,17 +25,22 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progre
 RUN chown -R www-data:www-data /var/www/html
 
 # =====================================================================
-#  Configuration Apache
+#  Démarrage
 #
-#  On écrit un hôte virtuel complet plutôt que de modifier les fichiers
-#  livrés avec l'image : les `sed` trop larges finissaient par toucher
-#  les fichiers de chargement des modules, d'où l'erreur « More than one
-#  MPM loaded ».
+#  Le port est imposé par Railway via la variable PORT, connue seulement
+#  à l'exécution. La configuration Apache est donc écrite au démarrage,
+#  une fois la valeur réellement disponible : Apache ne substitue pas
+#  les variables d'environnement dans ses fichiers de configuration.
 #
-#  La racine web est public/ : includes/ et api/ restent hors du dossier
-#  servi, donc inaccessibles depuis un navigateur.
+#  DocumentRoot pointe sur public/ : includes/, api/ et les fichiers de
+#  configuration restent hors du dossier servi.
 # =====================================================================
 RUN printf '%s\n' \
+    '#!/bin/sh' \
+    'set -e' \
+    'PORT="${PORT:-80}"' \
+    'echo "Listen ${PORT}" > /etc/apache2/ports.conf' \
+    'cat > /etc/apache2/sites-available/000-default.conf <<EOF' \
     '<VirtualHost *:${PORT}>' \
     '    DocumentRoot /var/www/html/public' \
     '    <Directory /var/www/html/public>' \
@@ -49,8 +51,10 @@ RUN printf '%s\n' \
     '    ErrorLog /proc/self/fd/2' \
     '    CustomLog /proc/self/fd/1 combined' \
     '</VirtualHost>' \
-    > /etc/apache2/sites-available/000-default.conf
+    'EOF' \
+    'echo "Apache demarre sur le port ${PORT}"' \
+    'exec apache2-foreground' \
+    > /usr/local/bin/demarrer.sh \
+    && chmod +x /usr/local/bin/demarrer.sh
 
-# Railway impose le port d'écoute via la variable PORT.
-# On la déclare à Apache, puis on remplace la directive Listen.
-CMD ["sh", "-c", "export PORT=${PORT:-80} && echo \"Listen ${PORT}\" > /etc/apache2/ports.conf && apache2-foreground"]
+CMD ["/usr/local/bin/demarrer.sh"]
