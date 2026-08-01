@@ -7,9 +7,19 @@
  * par la valeur écrite ici — ce qui suffit en local.
  */
 
-/** Lit une variable d'environnement, ou renvoie la valeur par défaut. */
+/**
+ * Lit une variable d'environnement, ou renvoie la valeur par défaut.
+ * Selon la configuration du serveur, les variables arrivent via getenv(),
+ * $_SERVER ou $_ENV : on interroge les trois.
+ */
 function env(string $cle, $defaut = null)
 {
+    foreach ([$_SERVER, $_ENV] as $source) {
+        if (isset($source[$cle]) && $source[$cle] !== '') {
+            return $source[$cle];
+        }
+    }
+
     $v = getenv($cle);
     return ($v === false || $v === '') ? $defaut : $v;
 }
@@ -33,8 +43,8 @@ define('SALON_ADRESSE', env('SALON_ADRESSE', '12 rue des Lilas, 29200 Brest'));
 
 /* URL publique du site. Sur Railway, RAILWAY_PUBLIC_DOMAIN est fourni. */
 define('SALON_URL', env('SALON_URL',
-    getenv('RAILWAY_PUBLIC_DOMAIN')
-        ? 'https://' . getenv('RAILWAY_PUBLIC_DOMAIN')
+    env('RAILWAY_PUBLIC_DOMAIN')
+        ? 'https://' . env('RAILWAY_PUBLIC_DOMAIN')
         : 'http://localhost/salon/public'
 ));
 

@@ -445,3 +445,31 @@ h1, h2 { font-family: 'Fraunces', serif; font-weight: 500; margin: 0; }
     .step-sub { margin-left: 0; }
     .confirm-actions .btn { width: 100%; }
 }
+
+
+/* ---------------------------------------------------------------------
+   Retour vers le site vitrine
+   --------------------------------------------------------------------- */
+
+.retour {
+    margin: 0 0 18px;
+}
+
+.retour a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 7px 14px;
+    border: 1px solid var(--line);
+    border-radius: 100px;
+    background: var(--paper);
+    transition: .16s;
+}
+
+.retour a:hover {
+    border-color: var(--accent);
+    color: var(--accent-deep);
+}

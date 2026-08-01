@@ -1,4 +1,8 @@
 .git
+.gitignore
 vendor
+node_modules
 _archives
 *.md
+*.sql
+includes/config.local.php
