@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/layout.php';
-require_once dirname(__DIR__, 3) . '/includes/creneaux.php';
+require_once SALON_BASE . '/includes/creneaux.php';
 
 $JOURS = [
     1 => 'Lundi',

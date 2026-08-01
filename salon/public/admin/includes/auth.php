@@ -8,8 +8,14 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-require_once dirname(__DIR__, 3) . '/api/database.php';
-require_once dirname(__DIR__, 3) . '/includes/config.php';
+/* Racine du projet (le dossier salon/), calculee une seule fois : les
+   pages de l'admin s'en servent au lieu de recompter les niveaux. */
+if (!defined('SALON_BASE')) {
+    define('SALON_BASE', dirname(__DIR__, 3));
+}
+
+require_once SALON_BASE . '/api/database.php';
+require_once SALON_BASE . '/includes/config.php';
 
 $database = new Database();
 $conn = $database->connect();

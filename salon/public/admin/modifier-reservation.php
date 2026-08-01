@@ -1,8 +1,8 @@
 <?php
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/layout.php';
-require_once dirname(__DIR__, 3) . '/includes/creneaux.php';
-require_once dirname(__DIR__, 3) . '/includes/notifications.php';
+require_once SALON_BASE . '/includes/creneaux.php';
+require_once SALON_BASE . '/includes/notifications.php';
 
 $id = (int) ($_GET['id'] ?? $_POST['id'] ?? 0);
 if ($id <= 0) {
