@@ -5,9 +5,13 @@
 
 FROM php:8.2-apache
 
-# Extensions nécessaires à PDO MySQL
-RUN docker-php-ext-install pdo pdo_mysql \
-    && a2enmod rewrite
+# unzip et libzip sont nécessaires à Composer pour décompresser les
+# paquets ; sans eux, l'installation de PHPMailer échoue.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends unzip libzip-dev git \
+    && docker-php-ext-install pdo pdo_mysql zip \
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/*
 
 # La racine web est public/ : includes/ et api/ restent hors du web,
 # donc inaccessibles depuis un navigateur.
@@ -18,12 +22,13 @@ RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-avail
 WORKDIR /var/www/html
 COPY . /var/www/html
 
-# PHPMailer (envoi SMTP des confirmations)
+# PHPMailer (envoi SMTP des confirmations).
+# COMPOSER_ALLOW_SUPERUSER : le conteneur tourne en root, c'est normal
+# dans une image Docker et Composer a besoin de le savoir.
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
-RUN composer install --no-dev --optimize-autoloader --no-interaction \
+ENV COMPOSER_ALLOW_SUPERUSER=1
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress \
     && chown -R www-data:www-data /var/www/html
 
 # Railway impose le port via la variable PORT
-CMD sed -i "s/Listen 80/Listen ${PORT:-80}/" /etc/apache2/ports.conf \
-    && sed -i "s/:80/:${PORT:-80}/" /etc/apache2/sites-available/000-default.conf \
-    && apache2-foreground
+CMD ["sh", "-c", "sed -i \"s/Listen 80/Listen ${PORT:-80}/\" /etc/apache2/ports.conf && sed -i \"s/:80/:${PORT:-80}/\" /etc/apache2/sites-available/000-default.conf && apache2-foreground"]
