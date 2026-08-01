@@ -6,24 +6,27 @@
 FROM php:8.2-apache
 
 # Marqueur de version : le modifier invalide le cache Docker et force la
-# reconstruction complète des couches suivantes. Utile quand une couche
-# mise en cache contient une configuration devenue incorrecte.
-ENV BUILD_REV=3
+# reconstruction complète des couches suivantes.
+ENV BUILD_REV=4
 
 # --- Dépendances ------------------------------------------------------
-# unzip et libzip sont nécessaires à Composer pour décompresser les paquets.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends unzip libzip-dev \
     && docker-php-ext-install pdo pdo_mysql zip \
     && rm -rf /var/lib/apt/lists/*
 
 # --- Modules Apache ---------------------------------------------------
-# L'image php:8.2-apache est livrée avec le MPM prefork actif. On s'assure
-# qu'un seul MPM est chargé : plusieurs simultanément font échouer le
-# démarrage avec « More than one MPM loaded ».
-RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
-    && a2enmod mpm_prefork rewrite \
-    && apache2ctl -t -D DUMP_MODULES 2>&1 | grep -i mpm
+# Apache refuse de démarrer si plusieurs MPM sont chargés. Plutôt que de
+# s'en remettre à a2dismod, on supprime tous les liens MPM de
+# mods-enabled/ puis on n'en réactive qu'un seul.
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
+    && ln -sf ../mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
+    && ln -sf ../mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
+    && a2enmod rewrite \
+    && echo "--- MPM presents dans mods-enabled ---" \
+    && ls -1 /etc/apache2/mods-enabled/ | grep -i mpm \
+    && echo "--- Test de configuration ---" \
+    && apache2ctl configtest
 
 WORKDIR /var/www/html
 COPY . /var/www/html
@@ -64,8 +67,10 @@ RUN printf '%s\n' \
     '    CustomLog /proc/self/fd/1 combined' \
     '</VirtualHost>' \
     'EOF' \
-    'echo "--- MPM charges ---"' \
-    'apache2ctl -t -D DUMP_MODULES 2>/dev/null | grep -i mpm || true' \
+    'echo "--- MPM dans mods-enabled ---"' \
+    'ls -1 /etc/apache2/mods-enabled/ | grep -i mpm || echo "(aucun)"' \
+    'echo "--- Test de configuration ---"' \
+    'apache2ctl configtest || true' \
     'echo "Apache demarre sur le port ${PORT}"' \
     'exec apache2-foreground' \
     > /usr/local/bin/demarrer.sh \
