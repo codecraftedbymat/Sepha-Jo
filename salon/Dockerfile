@@ -7,7 +7,7 @@ FROM php:8.2-apache
 
 # Marqueur de version : le modifier invalide le cache Docker et force la
 # reconstruction complète des couches suivantes.
-ENV BUILD_REV=5
+ENV BUILD_REV=6
 
 # --- Dépendances ------------------------------------------------------
 RUN apt-get update \
@@ -69,6 +69,15 @@ RUN printf '%s\n' \
     '    CustomLog /proc/self/fd/1 combined' \
     '</VirtualHost>' \
     'EOF' \
+    '' \
+    '# Apache ne transmet pas les variables du conteneur a PHP : on les' \
+    '# declare explicitement via PassEnv, sinon getenv() renvoie false' \
+    '# dans les scripts alors que le shell les voit bien.' \
+    'printf "PassEnv %s\\n" MYSQLHOST MYSQLPORT MYSQLUSER MYSQLPASSWORD MYSQLDATABASE \\' \
+    '    SALON_NOM SALON_EMAIL SALON_TEL SALON_ADRESSE SALON_URL TZ \\' \
+    '    SMTP_HOST SMTP_PORT SMTP_USER SMTP_PASS SMTP_FROM WEBHOOK_AGENDA \\' \
+    '    RAILWAY_PUBLIC_DOMAIN \\' \
+    '    > /etc/apache2/conf-enabled/passenv.conf' \
     '' \
     'echo "--- MPM dans mods-enabled ---"' \
     'ls -1 /etc/apache2/mods-enabled/ | grep -i mpm || echo "(aucun)"' \
