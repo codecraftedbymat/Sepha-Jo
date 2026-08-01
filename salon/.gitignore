@@ -1,0 +1,10 @@
+vendor/
+composer.lock
+.env
+
+# Identifiants locaux : ne doivent JAMAIS partir sur GitHub
+includes/config.local.php
+
+*.log
+.DS_Store
+Thumbs.db
