@@ -136,15 +136,36 @@ $resa = [
     'heure_fin'    => date('H\hi', strtotime($dateFin)),
 ];
 
-// La réservation est déjà enregistrée : un échec d'envoi ne doit pas
-// faire échouer la réponse au client.
-$mailClient = notifier_client($resa);
-$mailSalon  = notifier_salon($resa);
-notifier_webhook($resa);
-
-echo json_encode([
+/*
+ * La réservation est enregistrée : on répond IMMÉDIATEMENT à la cliente,
+ * puis on envoie les e-mails.
+ *
+ * L'ordre a son importance. Un serveur SMTP lent ou injoignable ferait
+ * autrement patienter le navigateur pendant tout le délai d'attente, et
+ * la cliente croirait que sa réservation a échoué alors qu'elle est bien
+ * enregistrée.
+ */
+$reponse = json_encode([
     'ok'          => true,
     'reservation' => $resa,
-    'mail_client' => $mailClient,
-    'mail_salon'  => $mailSalon,
 ], JSON_UNESCAPED_UNICODE);
+
+ignore_user_abort(true);
+header('Content-Length: ' . strlen($reponse));
+header('Connection: close');
+echo $reponse;
+
+// Termine la requête HTTP sans arrêter le script.
+if (function_exists('fastcgi_finish_request')) {
+    fastcgi_finish_request();
+} else {
+    while (ob_get_level() > 0) {
+        ob_end_flush();
+    }
+    flush();
+}
+
+// Le navigateur a sa réponse : les envois qui suivent ne le bloquent plus.
+notifier_client($resa);
+notifier_salon($resa);
+notifier_webhook($resa);

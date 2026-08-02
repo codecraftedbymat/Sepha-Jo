@@ -4,6 +4,9 @@ require_once __DIR__ . '/includes/layout.php';
 require_once SALON_BASE . '/includes/creneaux.php';
 require_once SALON_BASE . '/includes/notifications.php';
 
+// Un serveur SMTP injoignable ne doit pas bloquer l'administration.
+@set_time_limit(30);
+
 $prestations = $conn->query('
     SELECT Id, Service, Delay, Prices
     FROM Services

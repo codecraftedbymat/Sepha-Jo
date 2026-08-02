@@ -72,6 +72,15 @@ function generer_ics(array $r, int $sequence = 0): string
  */
 function envoyer_mail(string $destinataire, string $sujet, string $corpsHtml, string $ics = ''): bool
 {
+    // 1. API HTTP de Brevo — voie privilégiée en ligne.
+    //    Beaucoup d'hébergeurs, dont Railway, bloquent les ports SMTP
+    //    sortants pour limiter le spam. L'API passe par HTTPS (port 443),
+    //    qui n'est jamais bloqué.
+    if (BREVO_API_KEY !== '') {
+        return envoyer_via_api_brevo($destinataire, $sujet, $corpsHtml, $ics);
+    }
+
+    // 2. SMTP classique, si l'hébergeur l'autorise.
     if (SMTP_HOST !== '' && class_exists(\PHPMailer\PHPMailer\PHPMailer::class)) {
         return envoyer_via_smtp($destinataire, $sujet, $corpsHtml, $ics);
     }
@@ -83,6 +92,60 @@ function envoyer_mail(string $destinataire, string $sujet, string $corpsHtml, st
     }
 
     return envoyer_via_mail_natif($destinataire, $sujet, $corpsHtml, $ics);
+}
+
+/**
+ * Envoi via l'API HTTP de Brevo.
+ *
+ * Contrairement au SMTP, cette voie utilise HTTPS sur le port 443 : elle
+ * fonctionne donc sur les hébergements qui bloquent les ports SMTP.
+ * Nécessite une clé d'API (et non une clé SMTP), à créer dans Brevo,
+ * onglet « Clés API et MCP ».
+ */
+function envoyer_via_api_brevo(string $destinataire, string $sujet, string $corpsHtml, string $ics): bool
+{
+    $charge = [
+        'sender'      => ['email' => SMTP_FROM, 'name' => SALON_NOM],
+        'to'          => [['email' => $destinataire]],
+        'subject'     => $sujet,
+        'htmlContent' => $corpsHtml,
+        'replyTo'     => ['email' => SALON_EMAIL, 'name' => SALON_NOM],
+    ];
+
+    if ($ics !== '') {
+        $charge['attachment'] = [[
+            'content' => base64_encode($ics),
+            'name'    => 'rendez-vous.ics',
+        ]];
+    }
+
+    $ch = curl_init('https://api.brevo.com/v3/smtp/email');
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => json_encode($charge, JSON_UNESCAPED_UNICODE),
+        CURLOPT_HTTPHEADER     => [
+            'accept: application/json',
+            'content-type: application/json',
+            'api-key: ' . BREVO_API_KEY,
+        ],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 15,
+    ]);
+
+    $reponse = curl_exec($ch);
+    $code    = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $erreur  = curl_error($ch);
+    curl_close($ch);
+
+    // 201 = message accepté par Brevo.
+    if ($code === 201) {
+        return true;
+    }
+
+    error_log('Envoi Brevo echoue (HTTP ' . $code . ') : '
+        . ($erreur !== '' ? $erreur : (string) $reponse));
+
+    return false;
 }
 
 function envoyer_via_smtp(string $destinataire, string $sujet, string $corpsHtml, string $ics): bool
@@ -99,6 +162,10 @@ function envoyer_via_smtp(string $destinataire, string $sujet, string $corpsHtml
             ? \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS
             : \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
         $mail->CharSet    = 'UTF-8';
+
+        // Délai court : un serveur SMTP injoignable ne doit pas faire
+        // patienter la cliente. Par défaut PHPMailer attend 300 secondes.
+        $mail->Timeout    = 8;
 
         $mail->setFrom(SMTP_FROM, SALON_NOM);
         $mail->addAddress($destinataire);

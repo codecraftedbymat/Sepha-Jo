@@ -11,6 +11,7 @@
  *   2. Les variables séparées MYSQLHOST, MYSQLPORT, etc.
  *   3. Les réglages XAMPP par défaut, pour le développement local.
  */
+
 if (!function_exists('env_var')) {
     /**
      * Lit une variable d'environnement, quelle que soit la façon dont le
@@ -39,16 +40,7 @@ class Database
             return $this->conn;
         }
 
-        // Railway injecte ces variables dès qu'un service MySQL est lié.
-        // Selon la configuration du serveur, elles arrivent via getenv(),
-        // $_SERVER ou $_ENV : on interroge les trois.
         [$host, $port, $dbName, $user, $pass] = $this->parametres();
-        $host   = env_var('MYSQLHOST')     ?: $host;
-        $port   = env_var('MYSQLPORT')     ?: $port;
-        $dbName = env_var('MYSQLDATABASE') ?: $dbName;
-        $user   = env_var('MYSQLUSER')     ?: $user;
-        $pass   = env_var('MYSQLPASSWORD') ?: $pass;
-
 
         $dsn = "mysql:host={$host};port={$port};dbname={$dbName};charset=utf8mb4";
 
@@ -59,8 +51,8 @@ class Database
                 PDO::ATTR_EMULATE_PREPARES   => false,
             ]);
         } catch (PDOException $e) {
-            // En ligne, ne jamais exposer les identifiants dans le message.
-            if ($this->enLigne() || env_var('MYSQLHOST')) {
+            if ($this->enLigne()) {
+                // En ligne, ne jamais exposer les identifiants.
                 error_log('Connexion BDD echouee : ' . $e->getMessage());
                 http_response_code(500);
                 die('Service temporairement indisponible.');

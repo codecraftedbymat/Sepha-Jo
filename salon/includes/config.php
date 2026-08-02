@@ -85,6 +85,12 @@ const FERMETURES = [
    Si SMTP_HOST est vide, l'envoi est simplement ignoré sans bloquer la
    réservation.
    --------------------------------------------------------------------- */
+/* Clé d'API Brevo — voie privilégiée en ligne.
+   Beaucoup d'hébergeurs bloquent les ports SMTP sortants ; l'API passe
+   par HTTPS et n'est donc jamais bloquée. À créer dans Brevo, onglet
+   « Clés API et MCP » (ce n'est PAS la clé SMTP). */
+define('BREVO_API_KEY', env('BREVO_API_KEY', ''));
+
 define('SMTP_HOST', env('SMTP_HOST', ''));
 define('SMTP_PORT', (int) env('SMTP_PORT', 587));
 define('SMTP_USER', env('SMTP_USER', ''));

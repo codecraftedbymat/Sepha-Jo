@@ -40,7 +40,9 @@ $phpMailer    = class_exists(\PHPMailer\PHPMailer\PHPMailer::class);
 $configLocal  = is_file(dirname(__DIR__) . '/includes/config.local.php');
 
 // Quelle voie sera empruntée ?
-if (SMTP_HOST !== '' && $phpMailer) {
+if (BREVO_API_KEY !== '') {
+    $voie = 'API HTTP de Brevo (port 443)';
+} elseif (SMTP_HOST !== '' && $phpMailer) {
     $voie = 'PHPMailer en SMTP direct';
 } elseif (SMTP_HOST === '' && getenv('MYSQLHOST')) {
     $voie = 'AUCUNE — envoi ignoré (en ligne sans SMTP configuré)';
@@ -108,7 +110,10 @@ $log = is_readable($logSendmail) ? trim((string) file_get_contents($logSendmail)
           SALON_EMAIL !== 'contact@salon-eclat.fr');
     ligne('SMTP_FROM (adresse expéditrice)', SMTP_FROM,
           SMTP_FROM !== 'contact@salon-eclat.fr');
+    ligne('BREVO_API_KEY', BREVO_API_KEY !== '' ? '(renseignée)' : '(vide)',
+          BREVO_API_KEY !== '' ? true : null);
     ligne('SMTP_HOST', SMTP_HOST ?: '(vide)', null);
+    ligne('SMTP_PORT', SMTP_PORT ?: '(vide)', null);
     ligne('SMTP_USER', SMTP_USER ?: '(vide)', null);
     ligne('SMTP_PASS', SMTP_PASS !== '' ? '(renseignée)' : '(vide)', null);
     ?>
