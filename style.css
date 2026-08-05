@@ -999,14 +999,13 @@ ul {
    Mise en avant : une grande image et deux secondaires
    --------------------------------------------------------------------- */
 
+/* Deux visuels côte à côte, mêmes proportions : la mise en page ne dépend
+   pas de la hauteur relative des images, donc aucun blanc résiduel. */
 .showcase {
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
-    gap: 1.2rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.4rem;
     margin-bottom: 3.5rem;
-    /* Les deux colonnes s'alignent sur la même hauteur : la grande image
-       occupe toute la sienne, sans laisser de blanc en dessous. */
-    align-items: stretch;
 }
 
 .showcase figure {
@@ -1015,26 +1014,18 @@ ul {
     overflow: hidden;
     background: #fff;
     box-shadow: var(--pr-shadow);
+    display: flex;
+    flex-direction: column;
 }
 
-/* La figure principale est elle-même une grille : l'image prend la place
-   restante, la légende garde sa hauteur naturelle. */
-.showcase__main {
-    display: grid;
-    grid-template-rows: 1fr auto;
-    min-height: 0;
-}
-
-.showcase__main img {
+.showcase img {
     width: 100%;
-    height: 100%;
-    min-height: 0;
+    aspect-ratio: 4 / 3;
     object-fit: cover;
-    object-position: center 30%;
     display: block;
 }
 
-.showcase .showcase__main figcaption {
+.showcase figcaption {
     font-family: 'Montserrat', sans-serif;
     font-size: .78rem;
     font-weight: 300;
@@ -1045,26 +1036,7 @@ ul {
     padding: .85rem 1.1rem;
     background: #fff;
     text-align: left;
-}
-
-.showcase__side {
-    display: grid;
-    grid-template-rows: 1fr 1fr;
-    gap: 1.2rem;
-    min-height: 0;
-}
-
-.showcase__side figure {
-    min-height: 0;
-    overflow: hidden;
-}
-
-.showcase__side img {
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    object-fit: cover;
-    display: block;
+    margin-top: auto;
 }
 
 
@@ -1317,6 +1289,7 @@ ul {
 
 .highlight__media {
     display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 1rem;
 }
 
@@ -1331,6 +1304,19 @@ ul {
     aspect-ratio: 4 / 3;
     object-fit: cover;
     display: block;
+}
+
+/* L'affiche produit se lit en entier : pas de recadrage, sur deux colonnes. */
+.highlight__poster {
+    grid-column: span 2;
+    background: #fff;
+    border: 1px solid var(--pr-line);
+}
+
+.highlight__poster img {
+    aspect-ratio: auto;
+    height: auto;
+    object-fit: contain;
 }
 
 
@@ -1436,11 +1422,7 @@ ul {
 @media (max-width: 900px) {
     .page-header { padding: 9rem 0 3.5rem; }
 
-    .showcase { grid-template-columns: 1fr; }
-    .showcase__main { grid-template-rows: none; }
-    .showcase__main img { aspect-ratio: 4 / 3; height: auto; }
-    .showcase__side { grid-template-rows: none; grid-template-columns: 1fr 1fr; }
-    .showcase__side img { aspect-ratio: 3 / 4; height: auto; }
+    .showcase { grid-template-columns: 1fr 1fr; }
 
     .highlight {
         grid-template-columns: 1fr;
@@ -1459,6 +1441,6 @@ ul {
     .product__name { font-size: 1.08rem; }
     .product__desc { font-size: .76rem; }
     .gallery { grid-template-columns: 1fr 1fr; }
-    .showcase__side { grid-template-columns: 1fr; }
+    .showcase { grid-template-columns: 1fr; }
     .treatment-gallery { grid-template-columns: 1fr; }
 }
