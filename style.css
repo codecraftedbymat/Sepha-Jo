@@ -867,3 +867,573 @@ ul {
   display: block;
   opacity: 1;
 }
+
+
+/* =====================================================================
+   Sepha-Jo by Lotte — Producten & Behandelingen
+   Feuille complémentaire : à charger APRÈS style.css.
+   Ne redéfinit rien du site existant, sauf indication contraire.
+   ===================================================================== */
+
+:root {
+    --pr-ink:        #2E2620;
+    --pr-ink-soft:   #5C5148;
+    --pr-accent:     #A08B72;
+    --pr-cream:      #FBF8F4;
+    --pr-tint:       #F4EDE4;
+    --pr-line:       #E6DBCD;
+    --pr-shadow:     0 18px 44px -26px rgba(46, 38, 32, .45);
+}
+
+/* La barre de navigation n'a pas de hero derrière elle sur cette page :
+   on lui donne un fond dès le chargement pour rester lisible. */
+.page-producten .navbar,
+.navbar.is-solid {
+    background: rgba(251, 248, 244, .94);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--pr-line);
+}
+
+.navbar__link.is-current {
+    color: var(--pr-accent);
+}
+
+
+/* ---------------------------------------------------------------------
+   En-tête de page
+   --------------------------------------------------------------------- */
+
+.page-header {
+    padding: 11rem 0 4.5rem;
+    background: linear-gradient(180deg, var(--pr-tint) 0%, var(--pr-cream) 100%);
+    text-align: center;
+}
+
+.page-header__label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: .72rem;
+    font-weight: 500;
+    letter-spacing: .24em;
+    text-transform: uppercase;
+    color: var(--pr-accent);
+    margin: 0 0 1rem;
+}
+
+.page-header__title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2.2rem, 6vw, 3.6rem);
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--pr-ink);
+    margin: 0;
+}
+
+.page-header__divider {
+    width: 70px;
+    height: 1px;
+    border: none;
+    background: var(--pr-accent);
+    margin: 1.6rem auto;
+}
+
+.page-header__text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: .96rem;
+    font-weight: 300;
+    line-height: 1.85;
+    color: var(--pr-ink-soft);
+    max-width: 60ch;
+    margin: 0 auto;
+}
+
+
+/* ---------------------------------------------------------------------
+   Sections de marque
+   --------------------------------------------------------------------- */
+
+.brand-section {
+    padding: 5.5rem 0;
+    background: var(--pr-cream);
+}
+
+.brand-section--tinted {
+    background: var(--pr-tint);
+}
+
+.brand-head {
+    max-width: 62ch;
+    margin: 0 auto 3.2rem;
+    text-align: center;
+}
+
+.brand-head__eyebrow {
+    display: block;
+    font-family: 'Montserrat', sans-serif;
+    font-size: .7rem;
+    font-weight: 500;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--pr-accent);
+    margin-bottom: .9rem;
+}
+
+.brand-head__title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.9rem, 4.5vw, 2.7rem);
+    font-weight: 400;
+    color: var(--pr-ink);
+    margin: 0 0 1.1rem;
+}
+
+.brand-head__text {
+    font-family: 'Montserrat', sans-serif;
+    font-size: .93rem;
+    font-weight: 300;
+    line-height: 1.85;
+    color: var(--pr-ink-soft);
+    margin: 0;
+}
+
+
+/* ---------------------------------------------------------------------
+   Mise en avant : une grande image et deux secondaires
+   --------------------------------------------------------------------- */
+
+.showcase {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 1.2rem;
+    margin-bottom: 3.5rem;
+}
+
+.showcase figure {
+    margin: 0;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: var(--pr-shadow);
+}
+
+.showcase__main img {
+    width: 100%;
+    height: 100%;
+    max-height: 480px;
+    object-fit: cover;
+    display: block;
+}
+
+.showcase__main figcaption {
+    font-family: 'Montserrat', sans-serif;
+    font-size: .78rem;
+    font-weight: 300;
+    color: var(--pr-ink-soft);
+    padding: .85rem 1.1rem;
+    background: #fff;
+}
+
+.showcase__side {
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 1.2rem;
+}
+
+.showcase__side img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+
+/* ---------------------------------------------------------------------
+   Cartes explicatives
+   --------------------------------------------------------------------- */
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.4rem;
+    margin-bottom: 3.5rem;
+}
+
+.feature-card {
+    background: #fff;
+    border: 1px solid var(--pr-line);
+    border-radius: 14px;
+    padding: 1.9rem 1.7rem;
+}
+
+.feature-card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.35rem;
+    font-weight: 500;
+    color: var(--pr-ink);
+    margin: 0 0 .8rem;
+}
+
+.feature-card p {
+    font-family: 'Montserrat', sans-serif;
+    font-size: .88rem;
+    font-weight: 300;
+    line-height: 1.8;
+    color: var(--pr-ink-soft);
+    margin: 0;
+}
+
+.feature-card strong {
+    font-weight: 500;
+    color: var(--pr-ink);
+}
+
+
+/* ---------------------------------------------------------------------
+   Galerie
+   --------------------------------------------------------------------- */
+
+.gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 1rem;
+}
+
+.gallery figure {
+    margin: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 3 / 4;
+    background: #fff;
+}
+
+.gallery img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform .5s ease;
+}
+
+.gallery figure:hover img {
+    transform: scale(1.04);
+}
+
+
+/* ---------------------------------------------------------------------
+   Produits BBODY
+   --------------------------------------------------------------------- */
+
+.products {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 1.4rem;
+    margin-bottom: 3.8rem;
+}
+
+.product {
+    background: #fff;
+    border: 1px solid var(--pr-line);
+    border-radius: 14px;
+    padding: 1.2rem 1.2rem 1.6rem;
+    text-align: center;
+    transition: transform .3s ease, box-shadow .3s ease;
+}
+
+.product:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--pr-shadow);
+}
+
+.product__img {
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 1.1rem;
+    background: #F7F5F2;
+}
+
+.product__img img {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: contain;
+    display: block;
+}
+
+.product__code {
+    display: inline-block;
+    font-family: 'Montserrat', sans-serif;
+    font-size: .66rem;
+    font-weight: 500;
+    letter-spacing: .16em;
+    color: var(--pr-accent);
+    border: 1px solid var(--pr-line);
+    border-radius: 100px;
+    padding: .25rem .7rem;
+    margin-bottom: .7rem;
+}
+
+.product__name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem;
+    font-weight: 500;
+    color: var(--pr-ink);
+    margin: 0 0 .6rem;
+}
+
+.product__desc {
+    font-family: 'Montserrat', sans-serif;
+    font-size: .82rem;
+    font-weight: 300;
+    line-height: 1.75;
+    color: var(--pr-ink-soft);
+    margin: 0;
+}
+
+
+/* ---------------------------------------------------------------------
+   Mise en avant Electrolyte Mix
+   --------------------------------------------------------------------- */
+
+.highlight {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 2.6rem;
+    align-items: center;
+    background: #fff;
+    border: 1px solid var(--pr-line);
+    border-radius: 18px;
+    padding: 2.6rem;
+    margin-bottom: 2.4rem;
+}
+
+.highlight__eyebrow {
+    display: block;
+    font-family: 'Montserrat', sans-serif;
+    font-size: .68rem;
+    font-weight: 500;
+    letter-spacing: .2em;
+    text-transform: uppercase;
+    color: var(--pr-accent);
+    margin-bottom: .8rem;
+}
+
+.highlight__title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-weight: 400;
+    color: var(--pr-ink);
+    margin: 0 0 .4rem;
+}
+
+.highlight__lead {
+    font-family: 'Montserrat', sans-serif;
+    font-size: .8rem;
+    font-weight: 500;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--pr-accent);
+    margin: 0 0 1.2rem;
+}
+
+.highlight p {
+    font-family: 'Montserrat', sans-serif;
+    font-size: .89rem;
+    font-weight: 300;
+    line-height: 1.85;
+    color: var(--pr-ink-soft);
+    margin: 0 0 1.1rem;
+}
+
+.highlight__list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.3rem;
+}
+
+.highlight__list li {
+    font-family: 'Montserrat', sans-serif;
+    font-size: .87rem;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--pr-ink-soft);
+    padding-left: 1.5rem;
+    margin-bottom: .45rem;
+    position: relative;
+}
+
+.highlight__list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: .62em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--pr-accent);
+}
+
+.highlight__use {
+    font-style: italic;
+    padding: .9rem 1.1rem;
+    background: var(--pr-tint);
+    border-radius: 10px;
+}
+
+.highlight__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+}
+
+.highlight__tags span {
+    font-family: 'Montserrat', sans-serif;
+    font-size: .7rem;
+    font-weight: 400;
+    color: var(--pr-ink-soft);
+    background: var(--pr-tint);
+    border-radius: 100px;
+    padding: .38rem .9rem;
+}
+
+.highlight__media {
+    display: grid;
+    gap: 1rem;
+}
+
+.highlight__media figure {
+    margin: 0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.highlight__media img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+}
+
+
+/* ---------------------------------------------------------------------
+   Mention légale
+   --------------------------------------------------------------------- */
+
+.disclaimer {
+    font-family: 'Montserrat', sans-serif;
+    font-size: .78rem;
+    font-weight: 300;
+    line-height: 1.8;
+    color: var(--pr-ink-soft);
+    text-align: center;
+    max-width: 66ch;
+    margin: 0 auto;
+    padding: 1.1rem 1.4rem;
+    border: 1px dashed var(--pr-line);
+    border-radius: 10px;
+}
+
+
+/* ---------------------------------------------------------------------
+   Behandelingen
+   --------------------------------------------------------------------- */
+
+.treatments {
+    display: flex;
+    flex-direction: column;
+    gap: 3rem;
+}
+
+.treatment {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.6rem;
+    align-items: center;
+}
+
+.treatment--reverse .treatment__media {
+    order: 2;
+}
+
+.treatment__media {
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--pr-shadow);
+}
+
+.treatment__media img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+}
+
+.treatment__body h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 400;
+    color: var(--pr-ink);
+    margin: 0 0 1rem;
+}
+
+.treatment__body p {
+    font-family: 'Montserrat', sans-serif;
+    font-size: .9rem;
+    font-weight: 300;
+    line-height: 1.9;
+    color: var(--pr-ink-soft);
+    margin: 0 0 1rem;
+}
+
+.treatment__body strong {
+    font-weight: 500;
+    color: var(--pr-ink);
+}
+
+.treatment-gallery {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+}
+
+.treatment-gallery figure {
+    margin: 0;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.treatment-gallery img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    display: block;
+}
+
+
+/* ---------------------------------------------------------------------
+   Responsive
+   --------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+    .page-header { padding: 9rem 0 3.5rem; }
+
+    .showcase { grid-template-columns: 1fr; }
+    .showcase__side { grid-template-rows: none; grid-template-columns: 1fr 1fr; }
+    .showcase__main img { max-height: 380px; }
+
+    .highlight {
+        grid-template-columns: 1fr;
+        padding: 2rem 1.6rem;
+    }
+    .highlight__media { grid-template-columns: 1fr 1fr; }
+
+    .treatment { grid-template-columns: 1fr; gap: 1.6rem; }
+    .treatment--reverse .treatment__media { order: 0; }
+}
+
+@media (max-width: 560px) {
+    .brand-section { padding: 3.8rem 0; }
+    .products { grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .product { padding: .9rem .9rem 1.2rem; }
+    .product__name { font-size: 1.08rem; }
+    .product__desc { font-size: .76rem; }
+    .gallery { grid-template-columns: 1fr 1fr; }
+    .showcase__side { grid-template-columns: 1fr; }
+    .treatment-gallery { grid-template-columns: 1fr; }
+}
