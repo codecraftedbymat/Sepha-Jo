@@ -1184,139 +1184,112 @@ ul {
 
 /* ---------------------------------------------------------------------
    Mise en avant Electrolyte Mix
+   L'affiche produit porte déjà toute l'information : le texte se limite
+   donc à l'essentiel et laisse le visuel respirer.
    --------------------------------------------------------------------- */
 
-.highlight {
+.spotlight {
     display: grid;
-    grid-template-columns: 1.15fr 1fr;
-    gap: 2.6rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 3.5rem;
     align-items: center;
-    background: #fff;
-    border: 1px solid var(--pr-line);
-    border-radius: 18px;
-    padding: 2.6rem;
     margin-bottom: 2.4rem;
 }
 
-.highlight__eyebrow {
+.spotlight__poster {
+    margin: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: var(--pr-shadow);
+    max-width: 440px;
+    justify-self: end;
+}
+
+.spotlight__poster img {
+    width: 100%;
+    height: auto;
     display: block;
-    font-family: 'Montserrat', sans-serif;
-    font-size: .68rem;
-    font-weight: 500;
-    letter-spacing: .2em;
-    text-transform: uppercase;
-    color: var(--pr-accent);
-    margin-bottom: .8rem;
 }
 
-.highlight__title {
+.spotlight__text {
+    max-width: 34ch;
+}
+
+.spotlight__eyebrow {
+    display: inline-block;
+    font-family: 'Montserrat', sans-serif;
+    font-size: .62rem;
+    font-weight: 500;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--pr-accent);
+    border: 1px solid var(--pr-line);
+    border-radius: 100px;
+    padding: .3rem .85rem;
+    margin-bottom: 1.4rem;
+}
+
+.spotlight__title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-size: clamp(2rem, 4.5vw, 3rem);
     font-weight: 400;
+    line-height: 1.05;
     color: var(--pr-ink);
-    margin: 0 0 .4rem;
+    margin: 0 0 .5rem;
 }
 
-.highlight__lead {
+.spotlight__lead {
     font-family: 'Montserrat', sans-serif;
-    font-size: .8rem;
-    font-weight: 500;
-    letter-spacing: .14em;
+    font-size: .78rem;
+    font-weight: 400;
+    letter-spacing: .18em;
     text-transform: uppercase;
     color: var(--pr-accent);
-    margin: 0 0 1.2rem;
+    margin: 0 0 1.6rem;
 }
 
-.highlight p {
+.spotlight__desc {
     font-family: 'Montserrat', sans-serif;
-    font-size: .89rem;
+    font-size: .92rem;
     font-weight: 300;
-    line-height: 1.85;
+    line-height: 1.9;
     color: var(--pr-ink-soft);
-    margin: 0 0 1.1rem;
+    margin: 0 0 1.8rem;
 }
 
-.highlight__list {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 1.3rem;
-}
-
-.highlight__list li {
-    font-family: 'Montserrat', sans-serif;
-    font-size: .87rem;
-    font-weight: 300;
-    line-height: 1.7;
-    color: var(--pr-ink-soft);
-    padding-left: 1.5rem;
-    margin-bottom: .45rem;
-    position: relative;
-}
-
-.highlight__list li::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: .62em;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--pr-accent);
-}
-
-.highlight__use {
-    font-style: italic;
-    padding: .9rem 1.1rem;
-    background: var(--pr-tint);
-    border-radius: 10px;
-}
-
-.highlight__tags {
+.spotlight__tags {
     display: flex;
     flex-wrap: wrap;
     gap: .5rem;
 }
 
-.highlight__tags span {
+.spotlight__tags span {
     font-family: 'Montserrat', sans-serif;
     font-size: .7rem;
     font-weight: 400;
+    letter-spacing: .04em;
     color: var(--pr-ink-soft);
-    background: var(--pr-tint);
-    border-radius: 100px;
-    padding: .38rem .9rem;
-}
-
-.highlight__media {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-}
-
-.highlight__media figure {
-    margin: 0;
-    border-radius: 12px;
-    overflow: hidden;
-}
-
-.highlight__media img {
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    display: block;
-}
-
-/* L'affiche produit se lit en entier : pas de recadrage, sur deux colonnes. */
-.highlight__poster {
-    grid-column: span 2;
     background: #fff;
     border: 1px solid var(--pr-line);
+    border-radius: 100px;
+    padding: .4rem 1rem;
 }
 
-.highlight__poster img {
-    aspect-ratio: auto;
-    height: auto;
-    object-fit: contain;
+/* Une image large, en respiration entre deux blocs de texte */
+.wide-shot {
+    margin: 0 0 2.4rem;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--pr-shadow);
+}
+
+.wide-shot img {
+    width: 100%;
+    aspect-ratio: 21 / 9;
+    object-fit: cover;
+    object-position: center 40%;
+    display: block;
 }
 
 
@@ -1397,7 +1370,7 @@ ul {
 
 .treatment-gallery {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, 1fr);
     gap: 1.2rem;
 }
 
@@ -1424,11 +1397,16 @@ ul {
 
     .showcase { grid-template-columns: 1fr 1fr; }
 
-    .highlight {
+    .spotlight {
         grid-template-columns: 1fr;
-        padding: 2rem 1.6rem;
+        gap: 2rem;
+        justify-items: center;
+        text-align: center;
     }
-    .highlight__media { grid-template-columns: 1fr 1fr; }
+    .spotlight__poster { justify-self: center; max-width: 380px; }
+    .spotlight__text { max-width: 46ch; }
+    .spotlight__tags { justify-content: center; }
+    .wide-shot img { aspect-ratio: 16 / 9; }
 
     .treatment { grid-template-columns: 1fr; gap: 1.6rem; }
     .treatment--reverse .treatment__media { order: 0; }
