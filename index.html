@@ -24,6 +24,78 @@
   <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css" />
 
+  <!-- Bloc « Producten » : style embarqué pour ne dépendre d'aucun fichier
+       externe. Compact par choix : cette section est un renvoi vers la page
+       Producten, pas un contenu à part entière. -->
+  <style>
+    .pr-teaser {
+      padding: 4rem 0;
+      background: linear-gradient(180deg, #FBF8F4 0%, #F4EDE4 100%);
+    }
+    .pr-teaser__head { text-align: center; margin-bottom: 2.2rem; }
+    .pr-teaser__label {
+      font-family: 'Montserrat', sans-serif;
+      font-size: .68rem; font-weight: 500; letter-spacing: .22em;
+      text-transform: uppercase; color: #A08B72; margin: 0 0 .7rem;
+    }
+    .pr-teaser__title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(1.7rem, 4vw, 2.4rem); font-weight: 400;
+      color: #2E2620; margin: 0 0 .8rem;
+    }
+    .pr-teaser__text {
+      font-family: 'Montserrat', sans-serif;
+      font-size: .88rem; font-weight: 300; line-height: 1.75;
+      color: #5C5148; max-width: 52ch; margin: 0 auto;
+    }
+    .pr-teaser__grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 1rem; max-width: 820px; margin: 0 auto 2rem;
+    }
+    .pr-teaser__card {
+      display: block; text-decoration: none; background: #fff;
+      border: 1px solid #E6DBCD; border-radius: 12px; overflow: hidden;
+      transition: transform .3s ease, box-shadow .3s ease;
+    }
+    .pr-teaser__card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 34px -22px rgba(46,38,32,.5);
+    }
+    .pr-teaser__card figure {
+      margin: 0; aspect-ratio: 4 / 3; overflow: hidden; background: #F7F5F2;
+    }
+    .pr-teaser__card img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform .5s ease;
+    }
+    .pr-teaser__card:hover img { transform: scale(1.05); }
+    .pr-teaser__name {
+      font-family: 'Cormorant Garamond', serif; font-size: 1.05rem;
+      font-weight: 500; color: #2E2620; margin: .9rem 1rem .2rem;
+    }
+    .pr-teaser__sub {
+      font-family: 'Montserrat', sans-serif; font-size: .74rem;
+      font-weight: 300; color: #5C5148; margin: 0 1rem 1rem;
+    }
+    .pr-teaser__cta { text-align: center; }
+    .pr-teaser__link {
+      display: inline-flex; align-items: center; gap: .55rem;
+      padding: .9rem 2rem; background: #2E2620; color: #F6F1EB;
+      font-family: 'Montserrat', sans-serif; font-size: .76rem;
+      font-weight: 500; letter-spacing: .14em; text-transform: uppercase;
+      text-decoration: none; border-radius: 100px;
+      transition: background-color .25s ease, transform .25s ease;
+    }
+    .pr-teaser__link:hover { background: #A08B72; transform: translateY(-2px); }
+
+    @media (max-width: 700px) {
+      .pr-teaser { padding: 3rem 0; }
+      .pr-teaser__grid { grid-template-columns: 1fr 1fr; gap: .8rem; }
+      .pr-teaser__grid > :last-child { grid-column: span 2; }
+      .pr-teaser__link { width: 100%; justify-content: center; }
+    }
+  </style>
+
   <!-- Schema.org -->
   <script type="application/ld+json">
   {
@@ -60,7 +132,7 @@
       </a>
       <ul class="navbar__links" id="navLinks">
         <li><a href="#diensten" class="navbar__link">Behandelingen</a></li>
-        <li><a href="produits.html" class="navbar__link">Producten</a></li>
+        <li><a href="producten.html" class="navbar__link">Producten</a></li>
         <li><a href="#contact" class="navbar__link">Contact</a></li>
         <li><a href="salon/public/reserveren.php" class="navbar__link navbar__link--book">Afspraak maken</a></li>
       </ul>
@@ -211,50 +283,46 @@
     </div>
   </section>
 
-  <!-- ===== PRODUCTEN — accroche vers la page dédiée ===== -->
-  <section class="section producten-teaser" id="producten-teaser">
+  <!-- ===== PRODUCTEN — renvoi vers la page dédiée ===== -->
+  <section class="pr-teaser" id="producten-teaser">
     <div class="container">
-      <p class="section__label reveal">Waar ik mee werk</p>
-      <h2 class="section__title reveal">Producten &amp; Behandelingen</h2>
-      <hr class="section__divider reveal" />
-      <p class="section__description reveal">
-        IMAGE Skincare voor professionele huidverzorging, BBODY supplementen die van
-        binnenuit werken, en LED lichttherapie in het salon. Ontdek het volledige
-        assortiment.
-      </p>
 
-      <div class="teaser-grid reveal">
-        <a href="produits.html" class="teaser-card">
-          <div class="teaser-card__img">
-            <img src="images/image-rek.jpg" alt="IMAGE Skincare assortiment" loading="lazy" />
-          </div>
-          <h3 class="teaser-card__title">IMAGE Skincare</h3>
-          <p class="teaser-card__text">Klinisch onderbouwde huidverzorging</p>
+      <div class="pr-teaser__head reveal">
+        <p class="pr-teaser__label">Waar ik mee werk</p>
+        <h2 class="pr-teaser__title">Producten &amp; Behandelingen</h2>
+        <p class="pr-teaser__text">
+          IMAGE Skincare, BBODY supplementen en LED lichttherapie —
+          alles wat ik in het salon gebruik en aanbeveel.
+        </p>
+      </div>
+
+      <div class="pr-teaser__grid reveal">
+        <a href="producten.html#image-skincare" class="pr-teaser__card">
+          <figure><img src="producten/image-rek.jpg" alt="IMAGE Skincare assortiment" loading="lazy" /></figure>
+          <h3 class="pr-teaser__name">IMAGE Skincare</h3>
+          <p class="pr-teaser__sub">Professionele huidverzorging</p>
         </a>
 
-        <a href="produits.html#bbody" class="teaser-card">
-          <div class="teaser-card__img">
-            <img src="images/bbody-assortiment.jpg" alt="BBODY supplementen" loading="lazy" />
-          </div>
-          <h3 class="teaser-card__title">BBODY Supplementen</h3>
-          <p class="teaser-card__text">Schoonheid van binnenuit</p>
+        <a href="producten.html#bbody" class="pr-teaser__card">
+          <figure><img src="producten/bbody-assortiment.jpg" alt="BBODY supplementen" loading="lazy" /></figure>
+          <h3 class="pr-teaser__name">BBODY</h3>
+          <p class="pr-teaser__sub">Schoonheid van binnenuit</p>
         </a>
 
-        <a href="produits.html#behandelingen-beeld" class="teaser-card">
-          <div class="teaser-card__img">
-            <img src="images/led-rood-1.jpg" alt="LED lichttherapie" loading="lazy" />
-          </div>
-          <h3 class="teaser-card__title">LED Lichttherapie</h3>
-          <p class="teaser-card__text">Zichtbaar resultaat, pijnloos</p>
+        <a href="producten.html#behandelingen-beeld" class="pr-teaser__card">
+          <figure><img src="producten/led-rood-1.jpg" alt="LED lichttherapie" loading="lazy" /></figure>
+          <h3 class="pr-teaser__name">LED Lichttherapie</h3>
+          <p class="pr-teaser__sub">Zichtbaar resultaat</p>
         </a>
       </div>
 
-      <div class="teaser-cta reveal">
-        <a href="produits.html" class="teaser-cta__link">
-          Bekijk alle producten
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      <div class="pr-teaser__cta reveal">
+        <a href="producten.html" class="pr-teaser__link">
+          Bekijk alles
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         </a>
       </div>
+
     </div>
   </section>
 
