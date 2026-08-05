@@ -1004,6 +1004,9 @@ ul {
     grid-template-columns: 1.5fr 1fr;
     gap: 1.2rem;
     margin-bottom: 3.5rem;
+    /* Les deux colonnes s'alignent sur la même hauteur : la grande image
+       occupe toute la sienne, sans laisser de blanc en dessous. */
+    align-items: stretch;
 }
 
 .showcase figure {
@@ -1014,32 +1017,52 @@ ul {
     box-shadow: var(--pr-shadow);
 }
 
+/* La figure principale est elle-même une grille : l'image prend la place
+   restante, la légende garde sa hauteur naturelle. */
+.showcase__main {
+    display: grid;
+    grid-template-rows: 1fr auto;
+    min-height: 0;
+}
+
 .showcase__main img {
     width: 100%;
     height: 100%;
-    max-height: 480px;
+    min-height: 0;
     object-fit: cover;
+    object-position: center 30%;
     display: block;
 }
 
-.showcase__main figcaption {
+.showcase .showcase__main figcaption {
     font-family: 'Montserrat', sans-serif;
     font-size: .78rem;
     font-weight: 300;
+    font-style: normal;
+    letter-spacing: 0;
+    text-transform: none;
     color: var(--pr-ink-soft);
     padding: .85rem 1.1rem;
     background: #fff;
+    text-align: left;
 }
 
 .showcase__side {
     display: grid;
     grid-template-rows: 1fr 1fr;
     gap: 1.2rem;
+    min-height: 0;
+}
+
+.showcase__side figure {
+    min-height: 0;
+    overflow: hidden;
 }
 
 .showcase__side img {
     width: 100%;
     height: 100%;
+    min-height: 0;
     object-fit: cover;
     display: block;
 }
@@ -1414,8 +1437,10 @@ ul {
     .page-header { padding: 9rem 0 3.5rem; }
 
     .showcase { grid-template-columns: 1fr; }
+    .showcase__main { grid-template-rows: none; }
+    .showcase__main img { aspect-ratio: 4 / 3; height: auto; }
     .showcase__side { grid-template-rows: none; grid-template-columns: 1fr 1fr; }
-    .showcase__main img { max-height: 380px; }
+    .showcase__side img { aspect-ratio: 3 / 4; height: auto; }
 
     .highlight {
         grid-template-columns: 1fr;
